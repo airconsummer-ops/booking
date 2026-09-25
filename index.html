@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>立夏家政 · 預約管理系統</title>
-<meta name="description" content="立夏家政預約管理系統：客戶預約登記、工作人員指派、完成進度追蹤。" />
+<meta name="description" content="立夏家政預約管理系統：客戶預約登記、工作人員指派、完成進度追蹤，加密儲存。" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet" />
@@ -43,6 +43,25 @@
   --radius-lg:24px;
   --transition:.3s cubic-bezier(.22,1,.36,1);
 }
+body.dark-mode{
+  --primary-dark:#040f18;
+  --primary-mid:#0e4a66;
+  --primary-blue:#2a9ac4;
+  --primary-light:#4da6cc;
+  --primary-pale:#1f4a63;
+  --primary-bg:#0e1f2b;
+  --white:#16293a;
+  --gray-100:#101f2c;
+  --gray-200:#1f3a4d;
+  --gray-300:#26475d;
+  --text-dark:#e6f0f7;
+  --text-mid:#b3cddd;
+  --text-light:#7fa3b8;
+  --accent-light:#0d3d36;
+  --shadow-sm:0 4px 20px rgba(0,0,0,.28);
+  --shadow-md:0 12px 40px rgba(0,0,0,.38);
+  --shadow-lg:0 24px 60px rgba(0,0,0,.5);
+}
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;}
 body{
@@ -51,6 +70,7 @@ body{
   color:var(--text-dark);
   line-height:1.6;
   min-height:100vh;
+  transition:background .3s ease,color .3s ease;
 }
 button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit;}
 button{cursor:pointer;border:none;background:none;}
@@ -59,7 +79,159 @@ a{text-decoration:none;color:inherit;}
 .container{max-width:1280px;margin:0 auto;padding:0 24px;}
 
 /* ============================================================
-   2. HEADER
+   2. 鎖屏
+   ============================================================ */
+.lock-screen{
+  position:fixed;inset:0;z-index:9999;
+  background:linear-gradient(135deg,#05212f 0%,#0a3a52 50%,#146184 100%);
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;
+  transition:opacity .4s ease, visibility .4s ease;
+}
+.lock-screen.hidden{opacity:0;visibility:hidden;pointer-events:none;}
+.lock-screen::before{
+  content:'';position:absolute;top:-20%;right:-10%;
+  width:600px;height:600px;border-radius:50%;
+  background:radial-gradient(circle at 70% 30%,rgba(0,201,167,.15) 0%,rgba(0,201,167,.03) 60%,transparent 80%);
+  pointer-events:none;
+  animation:pulseGlow 8s ease-in-out infinite alternate;
+}
+@keyframes pulseGlow{
+  0%{transform:scale(1);opacity:.6;}
+  100%{transform:scale(1.2);opacity:1;}
+}
+.lock-box{
+  position:relative;
+  background:#fff;border-radius:24px;
+  padding:44px 38px 32px;
+  width:100%;max-width:430px;
+  box-shadow:0 30px 80px rgba(0,0,0,.4);
+  text-align:center;
+  animation:lockPop .55s cubic-bezier(.22,1,.36,1);
+}
+@keyframes lockPop{
+  from{opacity:0;transform:scale(.94) translateY(24px);}
+  to{opacity:1;transform:scale(1) translateY(0);}
+}
+.lock-logo{
+  width:76px;height:76px;border-radius:50%;
+  background:var(--accent-gradient);
+  color:#fff;font-size:2.2rem;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 22px;
+  box-shadow:0 12px 32px rgba(0,201,167,.35);
+  animation:floatIcon 4s ease-in-out infinite;
+}
+@keyframes floatIcon{
+  0%,100%{transform:translateY(0) rotate(0);}
+  50%{transform:translateY(-6px) rotate(8deg);}
+}
+.lock-box h2{
+  font-size:1.35rem;font-weight:800;
+  color:var(--primary-dark);margin-bottom:6px;
+  letter-spacing:-.3px;
+}
+.lock-box .lock-sub{
+  font-size:.88rem;color:var(--text-light);
+  margin-bottom:26px;line-height:1.6;
+}
+.lock-input-wrap{
+  position:relative;margin-bottom:14px;
+  display:flex;align-items:center;
+}
+.lock-input-wrap > i.fa-lock,
+.lock-input-wrap > i.fa-key{
+  position:absolute;left:18px;
+  color:var(--text-light);font-size:1rem;
+  pointer-events:none;transition:var(--transition);
+}
+.lock-input-wrap input{
+  width:100%;
+  padding:14px 50px 14px 48px;
+  border-radius:14px;
+  border:1.5px solid var(--gray-200);
+  background:var(--primary-bg);
+  font-size:1rem;letter-spacing:.5px;
+  outline:none;transition:var(--transition);
+}
+.lock-input-wrap input:focus{
+  border-color:var(--accent);background:#fff;
+  box-shadow:0 0 0 4px rgba(0,201,167,.12);
+}
+.lock-input-wrap input:focus ~ i.fa-lock,
+.lock-input-wrap input:focus ~ i.fa-key{color:var(--accent-dark);}
+.lock-input-wrap .toggle-pwd{
+  position:absolute;right:8px;
+  width:36px;height:36px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-light);font-size:.9rem;
+  transition:var(--transition);
+}
+.lock-input-wrap .toggle-pwd:hover{
+  background:var(--primary-bg);color:var(--primary-dark);
+}
+.lock-error{
+  color:#c0392b;font-size:.82rem;
+  min-height:20px;margin-bottom:8px;
+  font-weight:600;display:flex;align-items:center;
+  justify-content:center;gap:6px;
+  text-align:center;
+}
+.lock-error:empty{visibility:hidden;}
+.lock-error i{font-size:.85rem;}
+.lock-error.locked{color:#c0392b;font-weight:700;font-size:.86rem;}
+
+.lock-btn{
+  width:100%;
+  padding:15px 24px;
+  border-radius:14px;
+  background:var(--accent-gradient);
+  color:#fff;font-weight:700;font-size:1rem;
+  letter-spacing:.5px;
+  box-shadow:0 8px 24px rgba(0,201,167,.35);
+  transition:var(--transition);
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  margin-top:4px;
+}
+.lock-btn:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(0,201,167,.5);}
+.lock-btn:active{transform:translateY(-1px);}
+.lock-btn:disabled{
+  opacity:.6;cursor:not-allowed;transform:none;
+  box-shadow:0 4px 12px rgba(0,201,167,.2);
+}
+
+.lock-hint{
+  margin-top:22px;
+  padding-top:18px;
+  border-top:1px solid var(--gray-200);
+  font-size:.76rem;color:var(--text-light);
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  line-height:1.5;
+}
+.lock-hint i{color:var(--accent);font-size:.9rem;}
+
+.lock-pwd-strength{display:flex;gap:5px;margin-top:-6px;margin-bottom:12px;}
+.lock-pwd-strength span{flex:1;height:4px;border-radius:4px;background:var(--gray-200);transition:var(--transition);}
+.lock-pwd-strength.weak span:nth-child(1){background:#e8707a;}
+.lock-pwd-strength.fair span:nth-child(-n+2){background:#f0ad4e;}
+.lock-pwd-strength.good span:nth-child(-n+3){background:#3d9bc7;}
+.lock-pwd-strength.strong span{background:var(--accent);}
+
+.lock-switch{margin-top:16px;font-size:.8rem;color:var(--text-light);}
+.lock-switch button{
+  color:var(--accent-dark);font-weight:700;
+  text-decoration:underline;padding:4px 6px;
+  transition:var(--transition);
+}
+.lock-switch button:hover{color:var(--primary-dark);}
+
+.lock-attempts{
+  margin-top:12px;font-size:.75rem;color:var(--text-light);
+}
+.lock-attempts strong{color:var(--danger);}
+
+/* ============================================================
+   3. HEADER
    ============================================================ */
 .app-header{
   position:sticky;top:0;z-index:900;
@@ -81,10 +253,6 @@ a{text-decoration:none;color:inherit;}
   font-size:1.4rem;color:var(--primary-pale);
   animation:floatIcon 4s ease-in-out infinite;
 }
-@keyframes floatIcon{
-  0%,100%{transform:translateY(0) rotate(0);}
-  50%{transform:translateY(-5px) rotate(8deg);}
-}
 .brand-text h1{
   font-size:1.25rem;font-weight:800;letter-spacing:.5px;
   background:linear-gradient(135deg,#fff,#b3e0f0);
@@ -96,7 +264,7 @@ a{text-decoration:none;color:inherit;}
 .header-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
 .hbtn{
   display:inline-flex;align-items:center;gap:8px;
-  padding:10px 18px;border-radius:40px;
+  padding:10px 16px;border-radius:40px;
   font-size:.85rem;font-weight:600;
   background:rgba(255,255,255,.10);
   color:#fff;border:1px solid rgba(255,255,255,.12);
@@ -108,9 +276,10 @@ a{text-decoration:none;color:inherit;}
   box-shadow:0 6px 20px rgba(0,201,167,.35);
 }
 .hbtn.primary:hover{box-shadow:0 10px 28px rgba(0,201,167,.5);}
+.hbtn.icon-only{padding:10px 12px;}
 
 /* ============================================================
-   3. 統計卡
+   4. 統計卡
    ============================================================ */
 .stats{
   display:grid;
@@ -119,7 +288,7 @@ a{text-decoration:none;color:inherit;}
   margin-top:24px;
 }
 .stat-card{
-  background:#fff;border-radius:var(--radius-md);
+  background:var(--white);border-radius:var(--radius-md);
   padding:18px 20px;box-shadow:var(--shadow-sm);
   border:1px solid var(--gray-200);
   position:relative;overflow:hidden;
@@ -134,10 +303,7 @@ a{text-decoration:none;color:inherit;}
 .stat-card.s-done::before{background:linear-gradient(135deg,#2e7d32,#4caf50);}
 .stat-card.s-today::before{background:linear-gradient(135deg,#1e7ea3,#4da6cc);}
 .stat-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);}
-.stat-card .sc-top{
-  display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:6px;
-}
+.stat-card .sc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
 .stat-card .sc-icon{
   width:36px;height:36px;border-radius:10px;
   display:flex;align-items:center;justify-content:center;
@@ -147,27 +313,26 @@ a{text-decoration:none;color:inherit;}
 .stat-card.s-ongoing .sc-icon{background:var(--accent-light);color:var(--accent-dark);}
 .stat-card.s-done .sc-icon{background:#e8f5e9;color:var(--success);}
 .stat-card.s-today .sc-icon{background:#e0eff6;color:var(--primary-blue);}
+body.dark-mode .stat-card.s-pending .sc-icon{background:#3d2e12;color:#f0ad4e;}
+body.dark-mode .stat-card.s-done .sc-icon{background:#123d18;color:#4caf50;}
+body.dark-mode .stat-card.s-today .sc-icon{background:#0e3040;color:#4da6cc;}
+body.dark-mode .stat-card.s-ongoing .sc-icon{background:var(--accent-light);color:var(--accent);}
 .stat-card .sc-num{
   font-size:1.9rem;font-weight:800;letter-spacing:-1px;
-  color:var(--primary-dark);line-height:1.1;
+  color:var(--text-dark);line-height:1.1;
 }
-.stat-card .sc-label{
-  font-size:.78rem;color:var(--text-light);font-weight:500;
-  margin-top:2px;
-}
+.stat-card .sc-label{font-size:.78rem;color:var(--text-light);font-weight:500;margin-top:2px;}
 
 /* ============================================================
-   4. 工具列
+   5. 工具列
    ============================================================ */
 .toolbar{
-  background:#fff;border-radius:var(--radius-md);
+  background:var(--white);border-radius:var(--radius-md);
   padding:16px 18px;margin-top:20px;
   box-shadow:var(--shadow-sm);border:1px solid var(--gray-200);
   display:flex;gap:12px;flex-wrap:wrap;align-items:center;
 }
-.search-box{
-  flex:1 1 260px;position:relative;min-width:200px;
-}
+.search-box{flex:1 1 260px;position:relative;min-width:200px;}
 .search-box i{
   position:absolute;left:16px;top:50%;transform:translateY(-50%);
   color:var(--text-light);font-size:.9rem;pointer-events:none;
@@ -179,7 +344,7 @@ a{text-decoration:none;color:inherit;}
   font-size:.9rem;transition:var(--transition);
 }
 .search-box input:focus{
-  border-color:var(--accent);background:#fff;
+  border-color:var(--accent);background:var(--white);
   box-shadow:0 0 0 4px rgba(0,201,167,.10);
 }
 .toolbar select{
@@ -192,7 +357,7 @@ a{text-decoration:none;color:inherit;}
   background-repeat:no-repeat;background-position:right 14px center;
 }
 .toolbar select:focus{
-  border-color:var(--accent);background-color:#fff;
+  border-color:var(--accent);background-color:var(--white);
   box-shadow:0 0 0 4px rgba(0,201,167,.10);
 }
 .btn-ghost{
@@ -201,28 +366,68 @@ a{text-decoration:none;color:inherit;}
   font-size:.85rem;font-weight:600;color:var(--text-mid);
   transition:var(--transition);white-space:nowrap;
 }
-.btn-ghost:hover{border-color:var(--accent);color:var(--accent-dark);background:#fff;}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent-dark);background:var(--white);}
+
+/* 批量操作列 */
+.bulk-bar{
+  display:none;
+  align-items:center;gap:12px;flex-wrap:wrap;
+  padding:12px 18px;
+  background:linear-gradient(135deg,rgba(0,201,167,.10),rgba(0,168,139,.05));
+  border:1.5px dashed var(--accent);
+  border-radius:var(--radius-md);
+  margin-top:14px;
+}
+.bulk-bar.show{display:flex;}
+.bulk-bar .bb-count{
+  font-weight:700;color:var(--accent-dark);font-size:.9rem;
+  display:flex;align-items:center;gap:8px;
+}
+.bulk-bar .bb-count strong{
+  background:var(--accent-gradient);color:#fff;
+  padding:1px 10px;border-radius:20px;font-size:.85rem;
+}
+.bulk-bar .bb-actions{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto;}
+.bulk-btn{
+  padding:8px 16px;border-radius:30px;
+  font-size:.8rem;font-weight:600;
+  border:1.5px solid var(--gray-200);background:var(--white);
+  color:var(--text-mid);transition:var(--transition);
+  display:inline-flex;align-items:center;gap:6px;
+}
+.bulk-btn:hover{border-color:var(--accent);color:var(--accent-dark);}
+.bulk-btn.danger{color:#c0392b;border-color:#f5c6cb;}
+.bulk-btn.danger:hover{background:var(--danger);color:#fff;border-color:var(--danger);}
 
 /* ============================================================
-   5. 列表
+   6. 列表
    ============================================================ */
 .list-wrap{margin-top:20px;padding-bottom:60px;}
 .table-card{
-  background:#fff;border-radius:var(--radius-md);
+  background:var(--white);border-radius:var(--radius-md);
   box-shadow:var(--shadow-sm);border:1px solid var(--gray-200);
   overflow:hidden;
 }
 .table-scroll{overflow-x:auto;}
-table{
-  width:100%;border-collapse:collapse;min-width:960px;
-}
+table{width:100%;border-collapse:collapse;min-width:1020px;}
 thead th{
   text-align:left;font-size:.75rem;font-weight:700;
   letter-spacing:.6px;text-transform:uppercase;
   color:var(--text-light);background:var(--primary-bg);
   padding:14px 16px;border-bottom:1px solid var(--gray-200);
-  white-space:nowrap;
+  white-space:nowrap;user-select:none;
 }
+thead th.sortable{cursor:pointer;transition:var(--transition);}
+thead th.sortable:hover{color:var(--primary-blue);background:var(--gray-200);}
+thead th .sort-icon{
+  margin-left:5px;font-size:.7rem;opacity:.4;
+  transition:var(--transition);
+}
+thead th.sort-asc .sort-icon,
+thead th.sort-desc .sort-icon{opacity:1;color:var(--accent-dark);}
+thead th.sort-asc .sort-icon::before{content:'\f0de';}
+thead th.sort-desc .sort-icon::before{content:'\f0dd';}
+
 tbody td{
   padding:14px 16px;border-bottom:1px solid var(--gray-200);
   font-size:.88rem;color:var(--text-mid);vertical-align:middle;
@@ -230,8 +435,17 @@ tbody td{
 tbody tr{transition:background .2s;}
 tbody tr:hover{background:var(--primary-bg);}
 tbody tr:last-child td{border-bottom:none;}
-tbody tr.today-row{background:#f0fbf8;}
-tbody tr.today-row:hover{background:#e6f9f4;}
+tbody tr.today-row{background:rgba(0,201,167,.06);}
+body.dark-mode tbody tr.today-row{background:rgba(0,201,167,.10);}
+tbody tr.selected{background:rgba(0,201,167,.14);}
+body.dark-mode tbody tr.selected{background:rgba(0,201,167,.20);}
+
+/* 勾選框 */
+.check-col{width:38px;text-align:center;}
+.check-col input[type="checkbox"]{
+  width:17px;height:17px;cursor:pointer;
+  accent-color:var(--accent);
+}
 
 .cell-id{
   font-family:ui-monospace,monospace;font-size:.78rem;
@@ -249,6 +463,7 @@ tbody tr.today-row:hover{background:#e6f9f4;}
   background:var(--primary-pale);color:var(--primary-mid);
   padding:1px 8px;border-radius:20px;margin-right:6px;
 }
+body.dark-mode .cell-addr .addr-region{color:#b3e0f0;}
 .cell-addr .addr-text{
   display:block;font-size:.82rem;color:var(--text-mid);
   margin-top:3px;line-height:1.4;word-break:break-word;
@@ -258,8 +473,10 @@ tbody tr.today-row:hover{background:#e6f9f4;}
 .cell-time{white-space:nowrap;}
 .cell-time .t-date{font-weight:600;color:var(--text-dark);font-size:.84rem;}
 .cell-time .t-hour{font-size:.78rem;color:var(--text-light);}
+.cell-price{
+  font-weight:700;color:var(--accent-dark);font-size:.9rem;white-space:nowrap;
+}
 
-/* 狀態徽章 */
 .badge{
   display:inline-flex;align-items:center;gap:6px;
   padding:4px 12px;border-radius:40px;
@@ -267,21 +484,19 @@ tbody tr.today-row:hover{background:#e6f9f4;}
 }
 .badge i{font-size:.6rem;}
 
-/* 指派下拉 */
 .staff-select{
   padding:6px 28px 6px 10px;border-radius:8px;
-  border:1.5px solid var(--gray-200);background:#fff;
+  border:1.5px solid var(--gray-200);background:var(--white);
   font-size:.8rem;cursor:pointer;outline:none;
   transition:var(--transition);
   -webkit-appearance:none;appearance:none;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236a8fa3' stroke-width='3' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:right 10px center;
-  max-width:120px;
+  max-width:120px;color:var(--text-mid);
 }
 .staff-select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,201,167,.12);}
 .staff-select.unassigned{color:var(--text-light);font-style:italic;}
 
-/* 進度條 */
 .progress-wrap{min-width:110px;}
 .progress-bar{
   height:7px;border-radius:10px;background:var(--gray-200);
@@ -297,7 +512,6 @@ tbody tr.today-row:hover{background:#e6f9f4;}
   margin-top:4px;display:flex;justify-content:space-between;
 }
 
-/* 操作按鈕 */
 .row-actions{display:flex;gap:6px;white-space:nowrap;}
 .icon-btn{
   width:34px;height:34px;border-radius:9px;
@@ -307,22 +521,18 @@ tbody tr.today-row:hover{background:#e6f9f4;}
   transition:var(--transition);
 }
 .icon-btn:hover{background:var(--primary-blue);color:#fff;border-color:var(--primary-blue);transform:translateY(-2px);}
-.icon-btn.del:hover{background:var(--danger);border-color:var(--danger);}
-.icon-btn.wa:hover{background:var(--whatsapp-green);border-color:var(--whatsapp-green);}
+.icon-btn.del:hover{background:var(--danger);border-color:var(--danger);color:#fff;}
+.icon-btn.wa:hover{background:var(--whatsapp-green);border-color:var(--whatsapp-green);color:#fff;}
 
-/* 空狀態 */
 .empty-state{
   text-align:center;padding:70px 24px;color:var(--text-light);
 }
-.empty-state i{
-  font-size:3.4rem;color:var(--gray-300);
-  display:block;margin-bottom:14px;
-}
+.empty-state i{font-size:3.4rem;color:var(--gray-300);display:block;margin-bottom:14px;}
 .empty-state h3{font-size:1.1rem;color:var(--text-mid);margin-bottom:6px;}
 .empty-state p{font-size:.88rem;}
 
 /* ============================================================
-   6. 模態框
+   7. 模態框
    ============================================================ */
 .modal{
   position:fixed;inset:0;z-index:1000;
@@ -333,7 +543,7 @@ tbody tr.today-row:hover{background:#e6f9f4;}
 }
 .modal.active{display:flex;}
 .modal-box{
-  background:#fff;border-radius:var(--radius-lg);
+  background:var(--white);border-radius:var(--radius-lg);
   width:100%;max-width:720px;
   box-shadow:var(--shadow-lg);
   animation:modalPop .35s cubic-bezier(.22,1,.36,1);
@@ -367,15 +577,13 @@ tbody tr.today-row:hover{background:#e6f9f4;}
 .modal-body{padding:24px 26px 28px;}
 
 /* ============================================================
-   7. 表單
+   8. 表單
    ============================================================ */
-.form-grid{
-  display:grid;grid-template-columns:1fr 1fr;gap:16px;
-}
-.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.form-group{display:flex;flex-direction:column;gap:6px;position:relative;}
 .form-group.full{grid-column:1 / -1;}
 .form-group label{
-  font-size:.82rem;font-weight:700;color:var(--primary-dark);
+  font-size:.82rem;font-weight:700;color:var(--text-dark);
   display:flex;align-items:center;gap:6px;
 }
 .form-group label i{color:var(--accent);font-size:.82rem;width:14px;text-align:center;}
@@ -386,7 +594,7 @@ tbody tr.today-row:hover{background:#e6f9f4;}
   padding:11px 14px;border-radius:var(--radius-sm);
   border:1.5px solid var(--gray-200);background:var(--primary-bg);
   outline:none;font-size:.9rem;transition:var(--transition);
-  width:100%;
+  width:100%;color:var(--text-dark);
 }
 .form-group select{
   -webkit-appearance:none;appearance:none;
@@ -398,7 +606,7 @@ tbody tr.today-row:hover{background:#e6f9f4;}
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus{
-  border-color:var(--accent);background:#fff;
+  border-color:var(--accent);background:var(--white);
   box-shadow:0 0 0 4px rgba(0,201,167,.10);
 }
 .form-group input.err,
@@ -415,14 +623,13 @@ tbody tr.today-row:hover{background:#e6f9f4;}
   font-size:.82rem;font-weight:500;color:var(--text-mid);
   cursor:pointer;transition:var(--transition);
 }
-.radio-row label:hover{border-color:var(--accent);background:#fff;}
+.radio-row label:hover{border-color:var(--accent);background:var(--white);}
 .radio-row input[type="radio"]{accent-color:var(--accent);width:15px;height:15px;cursor:pointer;}
 .radio-row label:has(input:checked){
   border-color:var(--accent);background:var(--accent-light);
-  color:var(--primary-dark);font-weight:700;
+  color:var(--text-dark);font-weight:700;
 }
 
-/* 動態服務欄位 */
 .dyn-fields{
   grid-column:1 / -1;
   background:var(--accent-light);border-radius:var(--radius-sm);
@@ -440,7 +647,27 @@ tbody tr.today-row:hover{background:#e6f9f4;}
 }
 .dyn-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 
-/* 表單底部 */
+/* 客戶建議下拉 */
+.suggestions{
+  position:absolute;top:100%;left:0;right:0;
+  background:var(--white);border-radius:var(--radius-sm);
+  border:1.5px solid var(--accent);
+  box-shadow:var(--shadow-md);
+  max-height:220px;overflow-y:auto;
+  z-index:100;display:none;
+}
+.suggestions.show{display:block;}
+.suggestions .sug-item{
+  padding:10px 14px;cursor:pointer;
+  font-size:.85rem;border-bottom:1px solid var(--gray-200);
+  transition:background .15s;
+  display:flex;flex-direction:column;gap:2px;
+}
+.suggestions .sug-item:last-child{border-bottom:none;}
+.suggestions .sug-item:hover{background:var(--accent-light);}
+.suggestions .sug-item .sug-name{font-weight:700;color:var(--text-dark);}
+.suggestions .sug-item .sug-meta{font-size:.72rem;color:var(--text-light);}
+
 .form-footer{
   display:flex;gap:12px;justify-content:flex-end;
   margin-top:24px;flex-wrap:wrap;
@@ -460,19 +687,17 @@ tbody tr.today-row:hover{background:#e6f9f4;}
   background:var(--primary-bg);color:var(--text-mid);
   border:1.5px solid var(--gray-200);
 }
-.btn-secondary:hover{border-color:var(--primary-light);color:var(--primary-dark);background:#fff;}
+.btn-secondary:hover{border-color:var(--primary-light);color:var(--text-dark);background:var(--white);}
 .btn-danger{
   background:#fdeef0;color:#c0392b;border:1.5px solid #f5c6cb;
 }
 .btn-danger:hover{background:var(--danger);color:#fff;border-color:var(--danger);}
+body.dark-mode .btn-danger{background:#3d1619;color:#f5a9b0;border-color:#5c2429;}
 
 /* ============================================================
-   8. 詳情
+   9. 詳情
    ============================================================ */
-.detail-grid{
-  display:grid;grid-template-columns:1fr 1fr;gap:14px;
-  margin-bottom:20px;
-}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;}
 .detail-item{
   background:var(--primary-bg);border-radius:var(--radius-sm);
   padding:12px 16px;border:1px solid var(--gray-200);
@@ -490,27 +715,25 @@ tbody tr.today-row:hover{background:#e6f9f4;}
 }
 .detail-item .di-value.big{font-size:1.3rem;font-weight:800;color:var(--accent-dark);}
 
-/* 詳情內的進度控制 */
 .status-control{
-  background:#fff;border-radius:var(--radius-sm);
+  background:var(--white);border-radius:var(--radius-sm);
   border:1.5px solid var(--gray-200);padding:16px;
   margin-bottom:18px;
 }
 .status-control .sc-title{
-  font-size:.8rem;font-weight:700;color:var(--primary-dark);
+  font-size:.8rem;font-weight:700;color:var(--text-dark);
   margin-bottom:10px;display:flex;align-items:center;gap:6px;
 }
+.status-control .sc-title:not(:first-child){margin-top:16px;}
 .status-control .sc-title i{color:var(--accent);}
-.status-steps{
-  display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;
-}
+.status-steps{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;}
 .status-step{
   padding:7px 15px;border-radius:40px;
   border:1.5px solid var(--gray-200);background:var(--primary-bg);
   font-size:.78rem;font-weight:600;color:var(--text-mid);
   cursor:pointer;transition:var(--transition);
 }
-.status-step:hover{border-color:var(--accent);background:#fff;}
+.status-step:hover{border-color:var(--accent);background:var(--white);}
 .status-step.active{
   background:var(--accent-gradient);color:#fff;
   border-color:transparent;box-shadow:0 4px 14px rgba(0,201,167,.3);
@@ -520,7 +743,6 @@ tbody tr.today-row:hover{background:#e6f9f4;}
   box-shadow:0 4px 14px rgba(0,0,0,.15);
 }
 
-/* 工作人員指派（詳情內） */
 .staff-chips{display:flex;flex-wrap:wrap;gap:8px;}
 .staff-chip{
   padding:8px 16px;border-radius:40px;
@@ -529,14 +751,69 @@ tbody tr.today-row:hover{background:#e6f9f4;}
   cursor:pointer;transition:var(--transition);
   display:inline-flex;align-items:center;gap:6px;
 }
-.staff-chip:hover{border-color:var(--accent);background:#fff;}
+.staff-chip:hover{border-color:var(--accent);background:var(--white);}
 .staff-chip.active{
   background:var(--primary-dark);color:#fff;border-color:var(--primary-dark);
 }
 .staff-chip.active i{color:var(--accent);}
 
 /* ============================================================
-   9. TOAST
+   10. 備份還原
+   ============================================================ */
+.backup-info{
+  background:var(--accent-light);
+  border:1.5px dashed var(--accent);
+  border-radius:var(--radius-sm);
+  padding:14px 16px;
+  font-size:.82rem;color:var(--text-mid);
+  line-height:1.7;margin-bottom:18px;
+}
+.backup-info strong{color:var(--accent-dark);}
+.backup-info i{color:var(--accent);margin-right:4px;}
+
+.backup-actions{
+  display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;
+}
+.backup-action-card{
+  background:var(--primary-bg);
+  border:1.5px solid var(--gray-200);
+  border-radius:var(--radius-md);
+  padding:20px 18px;
+  text-align:center;cursor:pointer;
+  transition:var(--transition);
+}
+.backup-action-card:hover{
+  border-color:var(--accent);background:var(--white);
+  transform:translateY(-3px);
+  box-shadow:var(--shadow-md);
+}
+.backup-action-card i{
+  font-size:1.9rem;color:var(--accent);
+  display:block;margin-bottom:10px;
+}
+.backup-action-card h4{
+  font-size:.92rem;font-weight:700;color:var(--text-dark);
+  margin-bottom:4px;
+}
+.backup-action-card p{font-size:.76rem;color:var(--text-light);line-height:1.5;}
+
+/* ============================================================
+   11. 密碼管理
+   ============================================================ */
+.pwd-info{
+  background:var(--accent-light);
+  border:1.5px dashed var(--accent);
+  border-radius:var(--radius-sm);
+  padding:14px 16px;
+  font-size:.82rem;color:var(--text-mid);
+  line-height:1.7;margin-bottom:18px;
+}
+.pwd-info strong{color:var(--accent-dark);}
+.pwd-info i{color:var(--accent);margin-right:4px;}
+.pwd-form .form-group{margin-bottom:14px;}
+
+/* ============================================================
+   12. TOAST
    ============================================================ */
 #toast{
   position:fixed;bottom:28px;left:50%;
@@ -555,7 +832,7 @@ tbody tr.today-row:hover{background:#e6f9f4;}
 #toast.error i{color:#ff8a8a;}
 
 /* ============================================================
-   10. 響應式
+   13. 響應式
    ============================================================ */
 @media (max-width:1024px){
   .stats{grid-template-columns:repeat(2,1fr);}
@@ -565,24 +842,26 @@ tbody tr.today-row:hover{background:#e6f9f4;}
   .header-inner{padding-top:12px;padding-bottom:12px;}
   .brand-text h1{font-size:1.05rem;}
   .brand-text p{font-size:.65rem;}
-  .hbtn{padding:9px 15px;font-size:.8rem;}
+  .hbtn{padding:9px 13px;font-size:.8rem;}
   .hbtn span{display:none;}
   .hbtn.primary span{display:inline;}
 
   .form-grid{grid-template-columns:1fr;}
   .dyn-grid{grid-template-columns:1fr;}
   .detail-grid{grid-template-columns:1fr;}
+  .backup-actions{grid-template-columns:1fr;}
 
-  /* 表格轉卡片 */
   table{min-width:0;}
   thead{display:none;}
   tbody tr{
     display:block;
-    background:#fff;border-radius:var(--radius-md);
+    background:var(--white);border-radius:var(--radius-md);
     box-shadow:var(--shadow-sm);border:1px solid var(--gray-200);
     margin-bottom:14px;padding:16px;
+    position:relative;
   }
-  tbody tr:hover{background:#fff;}
+  tbody tr:hover{background:var(--white);}
+  tbody tr.selected{background:rgba(0,201,167,.10);}
   tbody td{
     display:flex;align-items:center;justify-content:space-between;
     gap:12px;padding:7px 0;border-bottom:1px dashed var(--gray-200);
@@ -595,6 +874,13 @@ tbody tr.today-row:hover{background:#e6f9f4;}
     text-transform:uppercase;letter-spacing:.4px;
     text-align:left;flex-shrink:0;
   }
+  .check-col{
+    position:absolute;top:12px;left:12px;
+    width:auto;text-align:left;border:none;padding:0;
+  }
+  .check-col::before{display:none;}
+  .check-col input{width:20px;height:20px;}
+  tbody td[data-label="編號"]{padding-left:34px;}
   .cell-addr{max-width:none;text-align:right;}
   .cell-addr .addr-text{text-align:right;}
   .cell-time{text-align:right;}
@@ -615,10 +901,63 @@ tbody tr.today-row:hover{background:#e6f9f4;}
   .toolbar{padding:12px;}
   .toolbar select{flex:1 1 45%;}
   .btn-ghost{flex:1 1 100%;text-align:center;justify-content:center;}
+  .lock-box{padding:32px 22px 26px;border-radius:20px;}
+  .lock-box h2{font-size:1.15rem;}
+  .lock-logo{width:64px;height:64px;font-size:1.8rem;}
+  .bulk-bar{padding:10px 14px;}
+  .bulk-bar .bb-actions{width:100%;margin-left:0;}
+  .bulk-btn{flex:1;justify-content:center;}
 }
 </style>
 </head>
 <body>
+
+<!-- ============================================================
+     鎖屏
+     ============================================================ -->
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-box">
+    <div class="lock-logo"><i class="fas fa-snowflake"></i></div>
+    <h2 id="lockTitle">立夏家政 · 預約管理系統</h2>
+    <p class="lock-sub" id="lockSubtitle">請輸入密碼以存取預約資料</p>
+
+    <form id="lockForm" autocomplete="off">
+      <div class="lock-input-wrap">
+        <i class="fas fa-key"></i>
+        <input type="password" id="lockPassword" placeholder="請輸入密碼" autocomplete="new-password" />
+        <button type="button" class="toggle-pwd" id="togglePwd" tabindex="-1" title="顯示／隱藏密碼">
+          <i class="fas fa-eye"></i>
+        </button>
+      </div>
+
+      <div class="lock-pwd-strength" id="pwdStrength" style="display:none;">
+        <span></span><span></span><span></span><span></span>
+      </div>
+
+      <div class="lock-input-wrap" id="confirmWrap" style="display:none;">
+        <i class="fas fa-key"></i>
+        <input type="password" id="lockConfirm" placeholder="請再次輸入密碼" autocomplete="new-password" />
+      </div>
+
+      <div class="lock-error" id="lockError"></div>
+
+      <button type="submit" class="lock-btn" id="lockBtn">
+        <i class="fas fa-lock-open"></i> <span id="lockBtnText">解鎖</span>
+      </button>
+    </form>
+
+    <div class="lock-switch" id="lockSwitch" style="display:none;">
+      <button type="button" id="switchMode">切換至登入模式</button>
+    </div>
+
+    <div class="lock-attempts" id="lockAttempts" style="display:none;"></div>
+
+    <div class="lock-hint" id="lockHint">
+      <i class="fas fa-shield-alt"></i>
+      <span>資料以 AES-256 加密儲存於本機，密碼不會上傳</span>
+    </div>
+  </div>
+</div>
 
 <!-- ============================================================
      HEADER
@@ -633,14 +972,26 @@ tbody tr.today-row:hover{background:#e6f9f4;}
       </div>
     </div>
     <div class="header-actions">
-      <button class="hbtn" id="btnStaff">
+      <button class="hbtn" id="btnStaff" title="工作人員管理">
         <i class="fas fa-users"></i> <span>工作人員</span>
       </button>
-      <button class="hbtn" id="btnExport">
+      <button class="hbtn" id="btnBackup" title="備份與還原">
+        <i class="fas fa-cloud-arrow-up"></i> <span>備份</span>
+      </button>
+      <button class="hbtn" id="btnExport" title="匯出 CSV">
         <i class="fas fa-file-export"></i> <span>匯出</span>
       </button>
-      <button class="hbtn primary" id="btnAdd">
+      <button class="hbtn" id="btnPwd" title="修改密碼">
+        <i class="fas fa-key"></i> <span>密碼</span>
+      </button>
+      <button class="hbtn" id="btnTheme" title="切換深色模式">
+        <i class="fas fa-moon" id="themeIcon"></i>
+      </button>
+      <button class="hbtn primary" id="btnAdd" title="新增預約（N）">
         <i class="fas fa-plus"></i> <span>新增預約</span>
+      </button>
+      <button class="hbtn icon-only" id="btnLock" title="鎖定系統">
+        <i class="fas fa-lock"></i>
       </button>
     </div>
   </div>
@@ -648,24 +999,16 @@ tbody tr.today-row:hover{background:#e6f9f4;}
 
 <main class="container">
 
-  <!-- 統計卡 -->
   <section class="stats" id="stats"></section>
 
-  <!-- 工具列 -->
   <section class="toolbar">
     <div class="search-box">
       <i class="fas fa-search"></i>
-      <input type="text" id="searchInput" placeholder="搜尋姓名 / 電話 / 地址 / 編號…" />
+      <input type="text" id="searchInput" placeholder="搜尋姓名 / 電話 / 地址 / 編號…（按 / 聚焦）" />
     </div>
-    <select id="filterStatus">
-      <option value="">全部狀態</option>
-    </select>
-    <select id="filterService">
-      <option value="">全部服務</option>
-    </select>
-    <select id="filterStaff">
-      <option value="">全部人員</option>
-    </select>
+    <select id="filterStatus"><option value="">全部狀態</option></select>
+    <select id="filterService"><option value="">全部服務</option></select>
+    <select id="filterStaff"><option value="">全部人員</option></select>
     <select id="filterDate">
       <option value="">全部日期</option>
       <option value="today">今日</option>
@@ -676,20 +1019,45 @@ tbody tr.today-row:hover{background:#e6f9f4;}
     <button class="btn-ghost" id="btnReset"><i class="fas fa-rotate-left"></i> 重設</button>
   </section>
 
-  <!-- 列表 -->
+  <!-- 批量操作列 -->
+  <section class="bulk-bar" id="bulkBar">
+    <span class="bb-count">
+      <i class="fas fa-check-square"></i>
+      已選 <strong id="bulkCount">0</strong> 筆
+    </span>
+    <div class="bb-actions">
+      <button class="bulk-btn" id="bulkAssign">
+        <i class="fas fa-user-gear"></i> 批量指派
+      </button>
+      <button class="bulk-btn" id="bulkStatus">
+        <i class="fas fa-signal"></i> 批量改狀態
+      </button>
+      <button class="bulk-btn danger" id="bulkDelete">
+        <i class="fas fa-trash"></i> 批量刪除
+      </button>
+      <button class="bulk-btn" id="bulkClear">
+        <i class="fas fa-xmark"></i> 取消選取
+      </button>
+    </div>
+  </section>
+
   <section class="list-wrap">
     <div class="table-card">
       <div class="table-scroll">
         <table>
           <thead>
             <tr>
-              <th>編號</th>
-              <th>客戶</th>
+              <th class="check-col">
+                <input type="checkbox" id="checkAll" title="全選" />
+              </th>
+              <th class="sortable" data-sort="id">編號 <i class="fas fa-sort sort-icon"></i></th>
+              <th class="sortable" data-sort="name">客戶 <i class="fas fa-sort sort-icon"></i></th>
               <th>地址</th>
-              <th>服務項目</th>
-              <th>預約時間</th>
+              <th class="sortable" data-sort="service">服務項目 <i class="fas fa-sort sort-icon"></i></th>
+              <th class="sortable" data-sort="date">預約時間 <i class="fas fa-sort sort-icon"></i></th>
               <th>指派人員</th>
-              <th>狀態 / 進度</th>
+              <th class="sortable" data-sort="status">狀態 / 進度 <i class="fas fa-sort sort-icon"></i></th>
+              <th class="sortable" data-sort="price">報價 <i class="fas fa-sort sort-icon"></i></th>
               <th>操作</th>
             </tr>
           </thead>
@@ -725,7 +1093,8 @@ tbody tr.today-row:hover{background:#e6f9f4;}
 
           <div class="form-group">
             <label for="fName"><i class="fas fa-user"></i> 客戶姓名 <span class="req">*</span></label>
-            <input type="text" id="fName" placeholder="例：陳先生 / 陳太" required />
+            <input type="text" id="fName" placeholder="例：陳先生 / 陳太" autocomplete="off" required />
+            <div class="suggestions" id="nameSuggestions"></div>
           </div>
 
           <div class="form-group">
@@ -760,7 +1129,6 @@ tbody tr.today-row:hover{background:#e6f9f4;}
             <input type="text" id="fAddress" placeholder="例：中環皇后大道中 1 號 15 樓 A 室" required />
           </div>
 
-          <!-- 動態欄位 -->
           <div class="dyn-fields" id="dynFields">
             <div class="dyn-title"><i class="fas fa-sliders"></i> 服務詳情</div>
             <div class="dyn-grid" id="dynGrid"></div>
@@ -778,9 +1146,7 @@ tbody tr.today-row:hover{background:#e6f9f4;}
 
           <div class="form-group">
             <label for="fStaff"><i class="fas fa-user-gear"></i> 指派工作人員</label>
-            <select id="fStaff">
-              <option value="">未指派</option>
-            </select>
+            <select id="fStaff"><option value="">未指派</option></select>
           </div>
 
           <div class="form-group">
@@ -858,12 +1224,141 @@ tbody tr.today-row:hover{background:#e6f9f4;}
     </div>
     <div class="modal-body">
       <div style="display:flex;gap:10px;margin-bottom:18px;">
-        <input type="text" id="staffInput" placeholder="輸入人員名稱" style="flex:1;padding:11px 14px;border-radius:10px;border:1.5px solid var(--gray-200);background:var(--primary-bg);outline:none;" />
+        <input type="text" id="staffInput" placeholder="輸入人員名稱" style="flex:1;padding:11px 14px;border-radius:10px;border:1.5px solid var(--gray-200);background:var(--primary-bg);outline:none;color:var(--text-dark);" />
         <button class="btn btn-primary" id="staffAddBtn" style="padding:11px 22px;">
           <i class="fas fa-plus"></i> 新增
         </button>
       </div>
       <div id="staffList" style="display:flex;flex-wrap:wrap;gap:10px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     備份與還原
+     ============================================================ -->
+<div class="modal" id="backupModal">
+  <div class="modal-box" style="max-width:560px;">
+    <div class="modal-header">
+      <div class="mh-icon"><i class="fas fa-cloud-arrow-up"></i></div>
+      <div>
+        <h2>備份與還原</h2>
+        <p>加密備份可跨裝置移轉資料</p>
+      </div>
+      <button class="modal-close" id="backupClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="backup-info">
+        <i class="fas fa-shield-alt"></i>
+        備份檔案中的資料保持加密狀態，<strong>需使用原密碼才能還原</strong>。建議將備份存於雲端硬碟或 USB，以免瀏覽器資料被清除後無法復原。
+      </div>
+
+      <div class="backup-actions">
+        <div class="backup-action-card" id="backupExportCard">
+          <i class="fas fa-file-arrow-down"></i>
+          <h4>匯出加密備份</h4>
+          <p>下載 .lixia 檔案<br />儲存所有預約與人員資料</p>
+        </div>
+        <div class="backup-action-card" id="backupImportCard">
+          <i class="fas fa-file-arrow-up"></i>
+          <h4>還原備份</h4>
+          <p>從 .lixia 檔案還原<br />需輸入備份密碼</p>
+        </div>
+      </div>
+
+      <div style="font-size:.78rem;color:var(--text-light);text-align:center;line-height:1.7;">
+        <i class="fas fa-info-circle" style="color:var(--accent);"></i>
+        匯出 CSV 為明文，請妥善保管；加密備份建議定期製作。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 匯入密碼輸入 -->
+<div class="modal" id="importPwdModal">
+  <div class="modal-box" style="max-width:440px;">
+    <div class="modal-header">
+      <div class="mh-icon"><i class="fas fa-key"></i></div>
+      <div>
+        <h2>輸入備份密碼</h2>
+        <p>請輸入製作此備份時使用的密碼</p>
+      </div>
+      <button class="modal-close" id="importPwdClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="pwd-form">
+        <div class="form-group">
+          <label for="importPwd"><i class="fas fa-key"></i> 備份密碼</label>
+          <input type="password" id="importPwd" placeholder="請輸入備份檔案的密碼" autocomplete="off" />
+        </div>
+        <div class="lock-error" id="importPwdError" style="margin-top:6px;"></div>
+        <div class="form-footer">
+          <button type="button" class="btn btn-secondary" id="importPwdCancel">取消</button>
+          <button type="button" class="btn btn-primary" id="importPwdConfirm">
+            <i class="fas fa-check"></i> 確認還原
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     修改密碼
+     ============================================================ -->
+<div class="modal" id="pwdModal">
+  <div class="modal-box" style="max-width:480px;">
+    <div class="modal-header">
+      <div class="mh-icon"><i class="fas fa-key"></i></div>
+      <div>
+        <h2>修改密碼</h2>
+        <p>更改存取此系統的密碼</p>
+      </div>
+      <button class="modal-close" id="pwdClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="pwd-info">
+        <i class="fas fa-info-circle"></i>
+        修改密碼後，所有預約資料將以新密碼重新加密儲存。請務必記住新密碼，<strong>遺失密碼將無法復原資料</strong>。
+      </div>
+      <form class="pwd-form" id="pwdForm" autocomplete="off">
+        <div class="form-group">
+          <label for="pwdCurrent"><i class="fas fa-lock"></i> 目前密碼 <span class="req">*</span></label>
+          <input type="password" id="pwdCurrent" placeholder="請輸入目前密碼" autocomplete="current-password" required />
+        </div>
+        <div class="form-group">
+          <label for="pwdNew"><i class="fas fa-key"></i> 新密碼 <span class="req">*</span></label>
+          <input type="password" id="pwdNew" placeholder="最少 4 位字元" autocomplete="new-password" required />
+        </div>
+        <div class="form-group">
+          <label for="pwdNew2"><i class="fas fa-key"></i> 確認新密碼 <span class="req">*</span></label>
+          <input type="password" id="pwdNew2" placeholder="請再次輸入新密碼" autocomplete="new-password" required />
+        </div>
+        <div class="lock-error" id="pwdError" style="margin-top:6px;"></div>
+        <div class="form-footer">
+          <button type="button" class="btn btn-secondary" id="pwdCancel">取消</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-check"></i> 確認修改
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 批量指派 / 批量狀態 -->
+<div class="modal" id="bulkModal">
+  <div class="modal-box" style="max-width:440px;">
+    <div class="modal-header">
+      <div class="mh-icon"><i class="fas fa-layer-group" id="bulkModalIcon"></i></div>
+      <div>
+        <h2 id="bulkModalTitle">批量操作</h2>
+        <p id="bulkModalSub">—</p>
+      </div>
+      <button class="modal-close" id="bulkModalClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="bulkModalBody"></div>
     </div>
   </div>
 </div>
@@ -878,8 +1373,12 @@ tbody tr.today-row:hover{background:#e6f9f4;}
 /* ============================================================
    常數
    ============================================================ */
-const STORAGE_KEY   = 'lixia_bookings_v1';
-const STAFF_KEY     = 'lixia_staff_v1';
+const STORAGE_KEY     = 'lixia_bookings_v2';
+const STAFF_KEY       = 'lixia_staff_v2';
+const OLD_BOOKING_KEY = 'lixia_bookings_v1';
+const OLD_STAFF_KEY   = 'lixia_staff_v1';
+const LOGIN_ATTEMPT_KEY = 'lixia_login_attempts_v1';
+const THEME_KEY       = 'lixia_theme_v1';
 
 const SERVICES = ['冷氣清洗','鐘點清潔','家居清潔','入伙清潔','其他'];
 const DISTRICTS = ['香港','九龍','新界'];
@@ -894,6 +1393,10 @@ const STATUSES = [
 ];
 
 const DEFAULT_STAFF = ['阿明','阿強','阿傑','小美','阿玲'];
+const PBKDF2_ITER   = 120000;
+const MAX_ATTEMPTS  = 5;
+const LOCKOUT_MS    = 5 * 60 * 1000;
+const AUTO_LOCK_MS  = 15 * 60 * 1000;
 
 /* ============================================================
    狀態
@@ -902,17 +1405,27 @@ let bookings = [];
 let staffList = [];
 let editingId = null;
 let viewingId = null;
+let selectedIds = new Set();
+
+let sessionPassword = null;
+let saveQueue = Promise.resolve();
+let unlocked = false;
+
+let sortField = 'date';
+let sortDir = 'asc';
+
+let lastActivity = Date.now();
+let autoLockTimer = null;
+
+let pendingImportPayload = null;
 
 /* ============================================================
    工具函式
    ============================================================ */
 function esc(s){
   return String(s == null ? '' : s)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;')
-    .replace(/'/g,'&#39;');
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 function uid(){
   const d = new Date();
@@ -934,31 +1447,8 @@ function fmtDate(s){
   if(p.length !== 3) return s;
   return p[0] + '年' + parseInt(p[1],10) + '月' + parseInt(p[2],10) + '日';
 }
-function statusOf(key){
-  return STATUSES.find(s => s.key === key) || STATUSES[0];
-}
-function normalizePhone(v){
-  return String(v || '').replace(/[^\d+]/g,'');
-}
-function loadJSON(key, fallback){
-  try{
-    const raw = localStorage.getItem(key);
-    if(!raw) return fallback;
-    const d = JSON.parse(raw);
-    return d == null ? fallback : d;
-  }catch(e){
-    console.warn('讀取失敗', key, e);
-    return fallback;
-  }
-}
-function saveJSON(key, val){
-  try{
-    localStorage.setItem(key, JSON.stringify(val));
-  }catch(e){
-    console.warn('儲存失敗', key, e);
-    toast('儲存失敗，請檢查瀏覽器設定', true);
-  }
-}
+function statusOf(key){ return STATUSES.find(s => s.key === key) || STATUSES[0]; }
+function normalizePhone(v){ return String(v || '').replace(/[^\d+]/g,''); }
 
 /* ============================================================
    Toast
@@ -966,74 +1456,685 @@ function saveJSON(key, val){
 let toastTimer = null;
 function toast(msg, isError){
   const el = document.getElementById('toast');
-  const msgEl = document.getElementById('toastMsg');
-  msgEl.textContent = msg;
+  document.getElementById('toastMsg').textContent = msg;
   el.classList.toggle('error', !!isError);
-  el.querySelector('i').className = isError
-    ? 'fas fa-circle-exclamation'
-    : 'fas fa-circle-check';
+  el.querySelector('i').className = isError ? 'fas fa-circle-exclamation' : 'fas fa-circle-check';
   el.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
 }
 
 /* ============================================================
-   資料初始化
+   加密工具
    ============================================================ */
-function initData(){
-  bookings = loadJSON(STORAGE_KEY, []);
-  if(!Array.isArray(bookings)) bookings = [];
+const cryptoSupported = !!(window.crypto && window.crypto.subtle && window.TextEncoder);
 
-  staffList = loadJSON(STAFF_KEY, null);
-  if(!Array.isArray(staffList) || !staffList.length){
-    staffList = DEFAULT_STAFF.slice();
-    saveJSON(STAFF_KEY, staffList);
+function buf2b64(buf){
+  const bytes = new Uint8Array(buf);
+  let bin = '';
+  const chunk = 0x8000;
+  for(let i=0; i<bytes.length; i+=chunk){
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i+chunk));
+  }
+  return btoa(bin);
+}
+function b642buf(b64){
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for(let i=0; i<bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+async function deriveKey(password, salt){
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw', enc.encode(password), { name:'PBKDF2' }, false, ['deriveKey']
+  );
+  return crypto.subtle.deriveKey(
+    { name:'PBKDF2', salt, iterations:PBKDF2_ITER, hash:'SHA-256' },
+    keyMaterial, { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']
+  );
+}
+async function encryptText(plainText, password){
+  if(!cryptoSupported) throw new Error('此瀏覽器不支援加密功能');
+  const enc = new TextEncoder();
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(password, salt);
+  const cipher = await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, enc.encode(plainText));
+  return {
+    v:2, alg:'AES-GCM/PBKDF2-SHA256', iter:PBKDF2_ITER,
+    salt:buf2b64(salt), iv:buf2b64(iv), data:buf2b64(cipher)
+  };
+}
+async function decryptText(payload, password){
+  if(!cryptoSupported) throw new Error('此瀏覽器不支援解密功能');
+  const salt = b642buf(payload.salt);
+  const iv = b642buf(payload.iv);
+  const data = b642buf(payload.data);
+  const key = await deriveKey(password, salt);
+  const plain = await crypto.subtle.decrypt({ name:'AES-GCM', iv }, key, data);
+  return new TextDecoder().decode(plain);
+}
+function isEncryptedPayload(raw){
+  try{
+    const p = JSON.parse(raw);
+    return p && (p.v === 1 || p.v === 2) && p.salt && p.iv && p.data;
+  }catch(e){ return false; }
+}
+
+/* ============================================================
+   儲存 / 讀取（加密）
+   ============================================================ */
+function writeEncrypted(key, value){
+  if(!sessionPassword) return Promise.reject(new Error('尚未解鎖'));
+  saveQueue = saveQueue.catch(() => {}).then(async () => {
+    const payload = await encryptText(JSON.stringify(value), sessionPassword);
+    localStorage.setItem(key, JSON.stringify(payload));
+  });
+  return saveQueue;
+}
+async function readEncrypted(key, password){
+  const raw = localStorage.getItem(key);
+  if(!raw) return null;
+  if(!isEncryptedPayload(raw)){
+    try{ return JSON.parse(raw); }catch(e){ return null; }
+  }
+  const payload = JSON.parse(raw);
+  const plain = await decryptText(payload, password);
+  return JSON.parse(plain);
+}
+
+/* ============================================================
+   舊版明文資料遷移
+   ============================================================ */
+function hasLegacyPlainData(){
+  const b = localStorage.getItem(OLD_BOOKING_KEY);
+  const s = localStorage.getItem(OLD_STAFF_KEY);
+  const isPlain = v => {
+    if(!v) return false;
+    if(isEncryptedPayload(v)) return false;
+    try{ JSON.parse(v); return true; }catch(e){ return false; }
+  };
+  return isPlain(b) || isPlain(s);
+}
+function readLegacyData(){
+  const out = { bookings:null, staff:null };
+  try{
+    const b = localStorage.getItem(OLD_BOOKING_KEY);
+    if(b && !isEncryptedPayload(b)) out.bookings = JSON.parse(b);
+  }catch(e){}
+  try{
+    const s = localStorage.getItem(OLD_STAFF_KEY);
+    if(s && !isEncryptedPayload(s)) out.staff = JSON.parse(s);
+  }catch(e){}
+  return out;
+}
+function clearLegacyData(){
+  try{
+    localStorage.removeItem(OLD_BOOKING_KEY);
+    localStorage.removeItem(OLD_STAFF_KEY);
+  }catch(e){}
+}
+
+/* ============================================================
+   登入嘗試限制
+   ============================================================ */
+function getLoginAttempts(){
+  try{
+    return JSON.parse(localStorage.getItem(LOGIN_ATTEMPT_KEY)) ||
+      { count: 0, lockUntil: 0 };
+  }catch(e){ return { count: 0, lockUntil: 0 }; }
+}
+function saveLoginAttempts(d){
+  localStorage.setItem(LOGIN_ATTEMPT_KEY, JSON.stringify(d));
+}
+function getLockRemaining(){
+  const d = getLoginAttempts();
+  if(d.lockUntil > Date.now()) return Math.ceil((d.lockUntil - Date.now()) / 1000);
+  return 0;
+}
+function recordFailedAttempt(){
+  const d = getLoginAttempts();
+  d.count = (d.count || 0) + 1;
+  if(d.count >= MAX_ATTEMPTS){
+    d.lockUntil = Date.now() + LOCKOUT_MS;
+    d.count = 0;
+  }
+  saveLoginAttempts(d);
+}
+function clearLoginAttempts(){
+  try{ localStorage.removeItem(LOGIN_ATTEMPT_KEY); }catch(e){}
+}
+function updateAttemptsHint(){
+  const el = document.getElementById('lockAttempts');
+  if(!el) return;
+  const remain = getLockRemaining();
+  if(remain > 0){
+    el.style.display = 'block';
+    el.innerHTML = '<i class="fas fa-clock" style="color:#c0392b;"></i> 嘗試次數過多，請等待 <strong>' +
+      Math.ceil(remain/60) + '</strong> 分鐘後再試';
+  }else{
+    const d = getLoginAttempts();
+    if(d.count > 0 && d.count < MAX_ATTEMPTS){
+      el.style.display = 'block';
+      el.innerHTML = '剩餘嘗試次數：<strong>' + (MAX_ATTEMPTS - d.count) + '</strong> 次';
+    }else{
+      el.style.display = 'none';
+    }
   }
 }
 
 /* ============================================================
-   渲染：下拉選項
+   密碼強度
    ============================================================ */
-function renderFilterOptions(){
-  const fs = document.getElementById('filterStatus');
-  fs.innerHTML = '<option value="">全部狀態</option>' +
-    STATUSES.map(s => `<option value="${s.key}">${s.label}</option>`).join('');
-
-  const fsv = document.getElementById('filterService');
-  fsv.innerHTML = '<option value="">全部服務</option>' +
-    SERVICES.map(s => `<option value="${s}">${s}</option>`).join('');
-
-  renderStaffFilter();
+function pwdStrength(pwd){
+  if(!pwd) return 0;
+  let score = 0;
+  if(pwd.length >= 4) score++;
+  if(pwd.length >= 8) score++;
+  if(/[A-Za-z]/.test(pwd) && /\d/.test(pwd)) score++;
+  if(/[^A-Za-z0-9]/.test(pwd) || pwd.length >= 12) score++;
+  return Math.min(score, 4);
 }
 
+/* ============================================================
+   鎖屏
+   ============================================================ */
+let lockMode = 'unlock';
+
+function setLockError(msg){
+  const el = document.getElementById('lockError');
+  if(!msg){ el.innerHTML = ''; el.classList.remove('locked'); return; }
+  el.innerHTML = '<i class="fas fa-circle-exclamation"></i>' + esc(msg);
+}
+
+function showLockScreen(mode){
+  lockMode = mode;
+  const lockScreen = document.getElementById('lockScreen');
+  const title = document.getElementById('lockTitle');
+  const subtitle = document.getElementById('lockSubtitle');
+  const confirmWrap = document.getElementById('confirmWrap');
+  const strength = document.getElementById('pwdStrength');
+  const btnText = document.getElementById('lockBtnText');
+  const btnIcon = document.querySelector('#lockBtn i');
+  const switchWrap = document.getElementById('lockSwitch');
+  const switchBtn = document.getElementById('switchMode');
+  const hint = document.getElementById('lockHint');
+
+  document.getElementById('lockForm').reset();
+  setLockError('');
+  document.getElementById('lockPassword').type = 'password';
+  document.getElementById('lockConfirm').type = 'password';
+  document.getElementById('togglePwd').querySelector('i').className = 'fas fa-eye';
+  document.getElementById('pwdStrength').className = 'lock-pwd-strength';
+
+  if(mode === 'setup'){
+    title.textContent = '設定存取密碼';
+    subtitle.textContent = hasLegacyPlainData()
+      ? '首次使用請設定密碼，現有資料將自動加密儲存'
+      : '首次使用請設定密碼，日後進入系統需輸入此密碼';
+    confirmWrap.style.display = 'flex';
+    strength.style.display = 'flex';
+    btnText.textContent = '設定並進入';
+    btnIcon.className = 'fas fa-shield-halved';
+    switchWrap.style.display = 'none';
+    hint.innerHTML = '<i class="fas fa-triangle-exclamation" style="color:#f0ad4e;"></i><span>請務必記住密碼，遺失後將無法復原資料</span>';
+    document.getElementById('lockAttempts').style.display = 'none';
+  }else{
+    title.textContent = '立夏家政 · 預約管理系統';
+    subtitle.textContent = '請輸入密碼以存取預約資料';
+    confirmWrap.style.display = 'none';
+    strength.style.display = 'none';
+    btnText.textContent = '解鎖';
+    btnIcon.className = 'fas fa-lock-open';
+    switchWrap.style.display = 'block';
+    switchBtn.textContent = '首次使用？設定新密碼';
+    hint.innerHTML = '<i class="fas fa-shield-alt"></i><span>資料以 AES-256 加密儲存於本機，密碼不會上傳</span>';
+    updateAttemptsHint();
+  }
+
+  lockScreen.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+
+  setTimeout(() => document.getElementById('lockPassword').focus(), 120);
+}
+
+function hideLockScreen(){
+  document.getElementById('lockScreen').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+/* ============================================================
+   鎖屏提交
+   ============================================================ */
+async function handleLockSubmit(e){
+  e.preventDefault();
+
+  const remain = getLockRemaining();
+  if(remain > 0){
+    setLockError('嘗試次數過多，請等待 ' + Math.ceil(remain/60) + ' 分鐘後再試');
+    return;
+  }
+
+  const pwdEl = document.getElementById('lockPassword');
+  const confirmEl = document.getElementById('lockConfirm');
+  const btn = document.getElementById('lockBtn');
+  const pwd = pwdEl.value;
+  const confirm = confirmEl.value;
+
+  setLockError('');
+
+  if(!pwd){ setLockError('請輸入密碼'); pwdEl.focus(); return; }
+  if(pwd.length < 4){ setLockError('密碼最少 4 位字元'); pwdEl.focus(); return; }
+
+  if(lockMode === 'setup'){
+    if(pwd !== confirm){ setLockError('兩次輸入的密碼不一致'); confirmEl.focus(); return; }
+    if(pwdStrength(pwd) < 2){
+      if(!confirm('密碼強度較弱，建議使用更長的密碼（含字母和數字）。\n\n仍要使用此密碼嗎？')){
+        pwdEl.focus(); return;
+      }
+    }
+  }
+
+  btn.disabled = true;
+  btn.querySelector('i').className = 'fas fa-spinner fa-spin';
+
+  try{
+    if(lockMode === 'setup'){
+      sessionPassword = pwd;
+
+      const legacy = readLegacyData();
+      let initialBookings = [];
+      let initialStaff = null;
+
+      if(legacy.bookings && Array.isArray(legacy.bookings)) initialBookings = legacy.bookings;
+      if(legacy.staff && Array.isArray(legacy.staff) && legacy.staff.length) initialStaff = legacy.staff;
+
+      bookings = initialBookings;
+      staffList = initialStaff || DEFAULT_STAFF.slice();
+
+      await writeEncrypted(STORAGE_KEY, bookings);
+      await writeEncrypted(STAFF_KEY, staffList);
+
+      if(legacy.bookings || legacy.staff) clearLegacyData();
+      clearLoginAttempts();
+
+      finishUnlock();
+      toast(legacy.bookings ? '密碼已設定，現有資料已加密' : '密碼已設定，歡迎使用');
+    }else{
+      const rawBookings = localStorage.getItem(STORAGE_KEY);
+      const rawStaff = localStorage.getItem(STAFF_KEY);
+
+      if(!rawBookings && !rawStaff){
+        setLockError('找不到任何資料，請切換至「設定新密碼」');
+        btn.disabled = false;
+        btn.querySelector('i').className = 'fas fa-lock-open';
+        return;
+      }
+
+      let loadedBookings = [];
+      let loadedStaff = null;
+
+      try{
+        if(rawBookings){
+          const b = await readEncrypted(STORAGE_KEY, pwd);
+          if(Array.isArray(b)) loadedBookings = b;
+        }
+        if(rawStaff){
+          const s = await readEncrypted(STAFF_KEY, pwd);
+          if(Array.isArray(s) && s.length) loadedStaff = s;
+        }
+      }catch(err){
+        console.warn('解密失敗', err);
+        recordFailedAttempt();
+        updateAttemptsHint();
+        const left = MAX_ATTEMPTS - getLoginAttempts().count;
+        const remainSec = getLockRemaining();
+        if(remainSec > 0){
+          setLockError('嘗試次數過多，已鎖定 5 分鐘');
+        }else{
+          setLockError('密碼錯誤，請重新輸入（剩 ' + Math.max(left,0) + ' 次）');
+        }
+        pwdEl.value = ''; confirmEl.value = ''; pwdEl.focus();
+        btn.disabled = false;
+        btn.querySelector('i').className = 'fas fa-lock-open';
+        return;
+      }
+
+      sessionPassword = pwd;
+      bookings = loadedBookings;
+      staffList = loadedStaff || DEFAULT_STAFF.slice();
+
+      if(!rawStaff) await writeEncrypted(STAFF_KEY, staffList);
+      if(!rawBookings) await writeEncrypted(STORAGE_KEY, bookings);
+
+      clearLoginAttempts();
+      finishUnlock();
+      toast('解鎖成功，歡迎回來');
+    }
+  }catch(err){
+    console.error(err);
+    setLockError('操作失敗：' + (err.message || '未知錯誤'));
+    btn.disabled = false;
+    btn.querySelector('i').className = 'fas fa-lock-open';
+    sessionPassword = null;
+  }
+}
+
+function finishUnlock(){
+  unlocked = true;
+  hideLockScreen();
+  lastActivity = Date.now();
+
+  const btn = document.getElementById('lockBtn');
+  btn.disabled = false;
+  btn.querySelector('i').className = 'fas fa-lock-open';
+
+  renderFilterOptions();
+  renderStaffOptions();
+  renderStatusRadios();
+  renderAll();
+
+  startAutoLock();
+}
+
+/* ============================================================
+   自動鎖定
+   ============================================================ */
+function startAutoLock(){
+  stopAutoLock();
+  autoLockTimer = setInterval(() => {
+    if(!unlocked) return;
+    if(Date.now() - lastActivity > AUTO_LOCK_MS){
+      lockApp(true);
+    }
+  }, 30000);
+}
+function stopAutoLock(){
+  if(autoLockTimer){ clearInterval(autoLockTimer); autoLockTimer = null; }
+}
+function recordActivity(){
+  lastActivity = Date.now();
+}
+
+function lockApp(byTimeout){
+  if(!unlocked) return;
+  sessionPassword = null;
+  unlocked = false;
+  bookings = [];
+  staffList = [];
+  selectedIds.clear();
+  sortField = 'date';
+  sortDir = 'asc';
+  stopAutoLock();
+
+  document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'));
+  document.body.style.overflow = 'hidden';
+
+  showLockScreen('unlock');
+  if(byTimeout){
+    toast('因閒置過久，系統已自動鎖定');
+  }else{
+    toast('系統已鎖定');
+  }
+}
+
+/* ============================================================
+   深色模式
+   ============================================================ */
+function applyTheme(dark){
+  document.body.classList.toggle('dark-mode', dark);
+  const icon = document.getElementById('themeIcon');
+  if(icon) icon.className = dark ? 'fas fa-sun' : 'fas fa-moon';
+  localStorage.setItem(THEME_KEY, dark ? 'dark' : 'light');
+}
+function initTheme(){
+  const saved = localStorage.getItem(THEME_KEY);
+  if(saved === 'dark'){
+    applyTheme(true);
+  }else if(saved === 'light'){
+    applyTheme(false);
+  }else if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
+    applyTheme(true);
+  }
+}
+function toggleTheme(){
+  applyTheme(!document.body.classList.contains('dark-mode'));
+}
+
+/* ============================================================
+   修改密碼
+   ============================================================ */
+function openPwdModal(){
+  document.getElementById('pwdForm').reset();
+  document.getElementById('pwdError').innerHTML = '';
+  document.getElementById('pwdModal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => document.getElementById('pwdCurrent').focus(), 100);
+}
+function closePwdModal(){
+  document.getElementById('pwdModal').classList.remove('active');
+  document.body.style.overflow = '';
+}
+async function handlePwdChange(e){
+  e.preventDefault();
+  const cur = document.getElementById('pwdCurrent').value;
+  const n1 = document.getElementById('pwdNew').value;
+  const n2 = document.getElementById('pwdNew2').value;
+  const errEl = document.getElementById('pwdError');
+  const setErr = m => { errEl.innerHTML = m ? '<i class="fas fa-circle-exclamation"></i>' + esc(m) : ''; };
+  setErr('');
+
+  if(!cur || !n1 || !n2){ setErr('請填寫所有欄位'); return; }
+  if(n1.length < 4){ setErr('新密碼最少 4 位字元'); return; }
+  if(n1 !== n2){ setErr('兩次輸入的新密碼不一致'); return; }
+  if(cur !== sessionPassword){ setErr('目前密碼不正確'); return; }
+  if(n1 === cur){ setErr('新密碼不可與目前密碼相同'); return; }
+
+  try{
+    await readEncrypted(STORAGE_KEY, cur);
+    sessionPassword = n1;
+    await writeEncrypted(STORAGE_KEY, bookings);
+    await writeEncrypted(STAFF_KEY, staffList);
+    closePwdModal();
+    toast('密碼已成功修改');
+  }catch(err){
+    console.error(err);
+    sessionPassword = cur;
+    setErr('修改失敗，請重試');
+  }
+}
+
+/* ============================================================
+   備份 / 還原
+   ============================================================ */
+function openBackupModal(){
+  document.getElementById('backupModal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closeBackupModal(){
+  document.getElementById('backupModal').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function exportBackup(){
+  const rawBookings = localStorage.getItem(STORAGE_KEY);
+  const rawStaff = localStorage.getItem(STAFF_KEY);
+  if(!rawBookings && !rawStaff){
+    toast('沒有可備份的資料', true);
+    return;
+  }
+  const backup = {
+    type:'lixia-backup',
+    version:2,
+    exportedAt:new Date().toISOString(),
+    count:bookings.length,
+    staffCount:staffList.length,
+    bookings: rawBookings ? JSON.parse(rawBookings) : null,
+    staff: rawStaff ? JSON.parse(rawStaff) : null
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type:'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const d = new Date();
+  const stamp = d.getFullYear() +
+    String(d.getMonth()+1).padStart(2,'0') +
+    String(d.getDate()).padStart(2,'0') + '_' +
+    String(d.getHours()).padStart(2,'0') +
+    String(d.getMinutes()).padStart(2,'0');
+  a.download = '立夏家政_加密備份_' + stamp + '.lixia';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('已匯出加密備份（' + bookings.length + ' 筆預約）');
+}
+
+function triggerImport(){
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.lixia,.json,application/json';
+  input.onchange = function(e){
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev){
+      try{
+        const payload = JSON.parse(ev.target.result);
+        if(!payload || payload.type !== 'lixia-backup'){
+          toast('檔案格式不正確', true);
+          return;
+        }
+        if(!payload.bookings && !payload.staff){
+          toast('備份檔案沒有資料', true);
+          return;
+        }
+        pendingImportPayload = payload;
+        openImportPwdModal();
+      }catch(err){
+        console.error(err);
+        toast('無法讀取檔案', true);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function openImportPwdModal(){
+  document.getElementById('importPwd').value = '';
+  document.getElementById('importPwdError').innerHTML = '';
+  document.getElementById('importPwdModal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => document.getElementById('importPwd').focus(), 100);
+}
+function closeImportPwdModal(){
+  document.getElementById('importPwdModal').classList.remove('active');
+  document.body.style.overflow = '';
+  pendingImportPayload = null;
+}
+
+async function confirmImport(){
+  const pwd = document.getElementById('importPwd').value;
+  const errEl = document.getElementById('importPwdError');
+  const setErr = m => { errEl.innerHTML = m ? '<i class="fas fa-circle-exclamation"></i>' + esc(m) : ''; };
+  setErr('');
+
+  if(!pendingImportPayload){ setErr('找不到備份資料'); return; }
+  if(!pwd){ setErr('請輸入備份密碼'); return; }
+
+  const btn = document.getElementById('importPwdConfirm');
+  btn.disabled = true;
+  const originalHTML = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 驗證中…';
+
+  try{
+    let loadedBookings = null;
+    let loadedStaff = null;
+
+    if(pendingImportPayload.bookings){
+      const plain = await decryptText(pendingImportPayload.bookings, pwd);
+      loadedBookings = JSON.parse(plain);
+    }
+    if(pendingImportPayload.staff){
+      const plain = await decryptText(pendingImportPayload.staff, pwd);
+      loadedStaff = JSON.parse(plain);
+    }
+
+    const bkCount = Array.isArray(loadedBookings) ? loadedBookings.length : 0;
+
+    const ok = confirm(
+      '✅ 備份密碼正確\n\n' +
+      '此備份包含：\n' +
+      '• ' + bkCount + ' 筆預約\n' +
+      '• ' + (Array.isArray(loadedStaff) ? loadedStaff.length : 0) + ' 位工作人員\n\n' +
+      '⚠️ 還原後將「覆蓋」目前所有資料，確定繼續嗎？'
+    );
+    if(!ok){
+      btn.disabled = false;
+      btn.innerHTML = originalHTML;
+      return;
+    }
+
+    // 重新用當前 session 密碼加密並儲存
+    if(Array.isArray(loadedBookings)){
+      bookings = loadedBookings;
+      await writeEncrypted(STORAGE_KEY, bookings);
+    }
+    if(Array.isArray(loadedStaff) && loadedStaff.length){
+      staffList = loadedStaff;
+      await writeEncrypted(STAFF_KEY, staffList);
+    }
+
+    closeImportPwdModal();
+    closeBackupModal();
+    renderStaffFilter();
+    renderStaffOptions();
+    renderAll();
+    toast('已成功還原 ' + bookings.length + ' 筆預約');
+  }catch(err){
+    console.warn('備份解密失敗', err);
+    setErr('備份密碼錯誤，無法解密');
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = originalHTML;
+  }
+}
+
+/* ============================================================
+   下拉選項
+   ============================================================ */
+function renderFilterOptions(){
+  document.getElementById('filterStatus').innerHTML = '<option value="">全部狀態</option>' +
+    STATUSES.map(s => `<option value="${s.key}">${s.label}</option>`).join('');
+  document.getElementById('filterService').innerHTML = '<option value="">全部服務</option>' +
+    SERVICES.map(s => `<option value="${s}">${s}</option>`).join('');
+  renderStaffFilter();
+}
 function renderStaffFilter(){
   const el = document.getElementById('filterStaff');
   const cur = el.value;
-  el.innerHTML = '<option value="">全部人員</option>' +
-    '<option value="__none__">未指派</option>' +
+  el.innerHTML = '<option value="">全部人員</option><option value="__none__">未指派</option>' +
     staffList.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
   el.value = cur;
 }
-
 function renderStaffOptions(){
   const opts = '<option value="">未指派</option>' +
     staffList.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
   const fStaff = document.getElementById('fStaff');
   if(fStaff) fStaff.innerHTML = opts;
 }
-
 function renderStatusRadios(){
-  const wrap = document.getElementById('statusRadios');
-  wrap.innerHTML = STATUSES.map((s, i) => `
+  document.getElementById('statusRadios').innerHTML = STATUSES.map((s, i) => `
     <label>
       <input type="radio" name="statusRadio" value="${s.key}" ${i===0?'checked':''} />
       <span>${s.label}</span>
-    </label>
-  `).join('');
+    </label>`).join('');
 }
 
 /* ============================================================
-   渲染：統計
+   統計
    ============================================================ */
 function renderStats(){
   const total = bookings.length;
@@ -1044,26 +2145,23 @@ function renderStats(){
   const todayCount = bookings.filter(b => b.date === today && b.status !== 'cancelled').length;
 
   const cards = [
-    { cls:'',            icon:'fa-calendar-check', num:total,    label:'總預約數' },
-    { cls:'s-pending',   icon:'fa-hourglass-half', num:pending,  label:'待處理' },
-    { cls:'s-ongoing',   icon:'fa-spinner',        num:ongoing,  label:'進行中' },
-    { cls:'s-done',      icon:'fa-circle-check',   num:done,     label:'已完成' },
-    { cls:'s-today',     icon:'fa-calendar-day',   num:todayCount, label:'今日預約' }
+    { cls:'',          icon:'fa-calendar-check', num:total,      label:'總預約數' },
+    { cls:'s-pending', icon:'fa-hourglass-half', num:pending,    label:'待處理' },
+    { cls:'s-ongoing', icon:'fa-spinner',        num:ongoing,    label:'進行中' },
+    { cls:'s-done',    icon:'fa-circle-check',   num:done,       label:'已完成' },
+    { cls:'s-today',   icon:'fa-calendar-day',   num:todayCount, label:'今日預約' }
   ];
 
   document.getElementById('stats').innerHTML = cards.map(c => `
     <div class="stat-card ${c.cls}">
-      <div class="sc-top">
-        <div class="sc-icon"><i class="fas ${c.icon}"></i></div>
-      </div>
+      <div class="sc-top"><div class="sc-icon"><i class="fas ${c.icon}"></i></div></div>
       <div class="sc-num">${c.num}</div>
       <div class="sc-label">${c.label}</div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
 /* ============================================================
-   渲染：列表
+   篩選 + 排序
    ============================================================ */
 function getFiltered(){
   const q = document.getElementById('searchInput').value.trim().toLowerCase();
@@ -1076,8 +2174,7 @@ function getFiltered(){
   const todayMs = new Date(today + 'T00:00:00').getTime();
   const weekLater = todayMs + 7 * 86400000;
 
-  return bookings.filter(b => {
-    // 搜尋
+  let rows = bookings.filter(b => {
     if(q){
       const hay = [b.id, b.name, b.phone, b.address, b.district, b.service, b.staff, b.notes]
         .map(v => String(v||'').toLowerCase()).join(' ');
@@ -1098,24 +2195,49 @@ function getFiltered(){
       if(fDate === 'past' && dMs >= todayMs) return false;
     }
     return true;
-  }).sort((a,b) => {
-    // 先按日期升序，再按時間
-    const da = (a.date||'') + ' ' + (a.time||'');
-    const db = (b.date||'') + ' ' + (b.time||'');
-    if(da < db) return -1;
-    if(da > db) return 1;
+  });
+
+  // 排序
+  const dir = sortDir === 'asc' ? 1 : -1;
+  rows.sort((a,b) => {
+    let va, vb;
+    if(sortField === 'price'){
+      va = a.price == null ? -1 : Number(a.price);
+      vb = b.price == null ? -1 : Number(b.price);
+    }else if(sortField === 'status'){
+      const order = { pending:0, confirmed:1, assigned:2, ongoing:3, done:4, cancelled:5 };
+      va = order[a.status] != null ? order[a.status] : 99;
+      vb = order[b.status] != null ? order[b.status] : 99;
+    }else if(sortField === 'date'){
+      va = (a.date||'') + ' ' + (a.time||'');
+      vb = (b.date||'') + ' ' + (b.time||'');
+    }else{
+      va = String(a[sortField] || '').toLowerCase();
+      vb = String(b[sortField] || '').toLowerCase();
+    }
+    if(va < vb) return -1 * dir;
+    if(va > vb) return 1 * dir;
+    // 次要排序：依建立時間倒序
     return (b.createdAt||'').localeCompare(a.createdAt||'');
   });
+
+  return rows;
 }
 
+/* ============================================================
+   列表渲染
+   ============================================================ */
 function renderTable(){
   const rows = getFiltered();
   const tbody = document.getElementById('tableBody');
   const empty = document.getElementById('emptyState');
 
+  updateSortIcons();
+
   if(!rows.length){
     tbody.innerHTML = '';
     empty.style.display = 'block';
+    updateBulkBar();
     return;
   }
   empty.style.display = 'none';
@@ -1125,15 +2247,17 @@ function renderTable(){
   tbody.innerHTML = rows.map(b => {
     const st = statusOf(b.status);
     const isToday = b.date === today && b.status !== 'cancelled';
+    const checked = selectedIds.has(b.id);
 
     const staffOpts = '<option value="">未指派</option>' +
       staffList.map(s => `<option value="${esc(s)}" ${b.staff===s?'selected':''}>${esc(s)}</option>`).join('');
 
     return `
-      <tr class="${isToday ? 'today-row' : ''}" data-id="${esc(b.id)}">
-        <td data-label="編號">
-          <span class="cell-id">${esc(b.id)}</span>
+      <tr class="${isToday?'today-row':''} ${checked?'selected':''}" data-id="${esc(b.id)}">
+        <td class="check-col">
+          <input type="checkbox" data-action="check" ${checked?'checked':''} />
         </td>
+        <td data-label="編號"><span class="cell-id">${esc(b.id)}</span></td>
         <td data-label="客戶">
           <div class="cell-name">${esc(b.name)}</div>
           <div class="cell-phone"><i class="fab fa-whatsapp"></i> ${esc(b.phone)}</div>
@@ -1167,10 +2291,15 @@ function renderTable(){
           </span>
           <div class="progress-wrap" style="margin-top:7px;">
             <div class="progress-bar">
-              <div class="progress-fill" style="width:${st.progress}%;background:${st.progress===100?'linear-gradient(135deg,#2e7d32,#4caf50)':(st.progress===0?'#c9d8e2':'var(--accent-gradient)')};"></div>
+              <div class="progress-fill" style="width:${st.progress}%;background:${
+                st.progress===100?'linear-gradient(135deg,#2e7d32,#4caf50)':(st.progress===0?'#c9d8e2':'var(--accent-gradient)')
+              };"></div>
             </div>
             <div class="progress-text"><span>進度</span><span>${st.progress}%</span></div>
           </div>
+        </td>
+        <td data-label="報價">
+          <span class="cell-price">${b.price != null ? 'HK$ ' + Number(b.price).toLocaleString() : '—'}</span>
         </td>
         <td data-label="操作">
           <div class="row-actions">
@@ -1180,18 +2309,213 @@ function renderTable(){
             <button class="icon-btn del" data-action="del" title="刪除"><i class="fas fa-trash"></i></button>
           </div>
         </td>
-      </tr>
-    `;
+      </tr>`;
   }).join('');
+
+  updateBulkBar();
+  updateCheckAllState();
+}
+
+function updateSortIcons(){
+  document.querySelectorAll('thead th.sortable').forEach(th => {
+    th.classList.remove('sort-asc','sort-desc');
+    if(th.getAttribute('data-sort') === sortField){
+      th.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+    }
+  });
+}
+
+function bindSorting(){
+  document.querySelectorAll('thead th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const field = th.getAttribute('data-sort');
+      if(sortField === field){
+        sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+      }else{
+        sortField = field;
+        sortDir = 'asc';
+      }
+      renderTable();
+    });
+  });
 }
 
 /* ============================================================
-   列表事件（事件委派）
+   勾選 / 批量
+   ============================================================ */
+function updateBulkBar(){
+  const bar = document.getElementById('bulkBar');
+  const count = document.getElementById('bulkCount');
+  count.textContent = selectedIds.size;
+  if(selectedIds.size > 0){
+    bar.classList.add('show');
+  }else{
+    bar.classList.remove('show');
+  }
+}
+function updateCheckAllState(){
+  const rows = getFiltered();
+  const checkAll = document.getElementById('checkAll');
+  if(!rows.length){
+    checkAll.checked = false; checkAll.indeterminate = false;
+    return;
+  }
+  const selectedInView = rows.filter(b => selectedIds.has(b.id)).length;
+  if(selectedInView === 0){
+    checkAll.checked = false; checkAll.indeterminate = false;
+  }else if(selectedInView === rows.length){
+    checkAll.checked = true; checkAll.indeterminate = false;
+  }else{
+    checkAll.checked = false; checkAll.indeterminate = true;
+  }
+}
+function clearSelection(){
+  selectedIds.clear();
+  renderTable();
+}
+
+function bindBulkEvents(){
+  document.getElementById('checkAll').addEventListener('change', function(){
+    const rows = getFiltered();
+    if(this.checked){
+      rows.forEach(b => selectedIds.add(b.id));
+    }else{
+      rows.forEach(b => selectedIds.delete(b.id));
+    }
+    renderTable();
+  });
+
+  document.getElementById('bulkClear').addEventListener('click', clearSelection);
+
+  document.getElementById('bulkDelete').addEventListener('click', function(){
+    if(selectedIds.size === 0) return;
+    if(!confirm(`確定刪除已選取的 ${selectedIds.size} 筆預約？\n此操作無法復原。`)) return;
+    bookings = bookings.filter(b => !selectedIds.has(b.id));
+    writeEncrypted(STORAGE_KEY, bookings);
+    selectedIds.clear();
+    renderAll();
+    toast('已刪除選取的預約');
+  });
+
+  document.getElementById('bulkAssign').addEventListener('click', function(){
+    if(selectedIds.size === 0) return;
+    openBulkModal('assign');
+  });
+  document.getElementById('bulkStatus').addEventListener('click', function(){
+    if(selectedIds.size === 0) return;
+    openBulkModal('status');
+  });
+}
+
+/* ============================================================
+   批量 Modal
+   ============================================================ */
+function openBulkModal(type){
+  const title = document.getElementById('bulkModalTitle');
+  const sub = document.getElementById('bulkModalSub');
+  const icon = document.getElementById('bulkModalIcon');
+  const body = document.getElementById('bulkModalBody');
+  const n = selectedIds.size;
+
+  if(type === 'assign'){
+    title.textContent = '批量指派工作人員';
+    sub.textContent = '將套用至已選取的 ' + n + ' 筆預約';
+    icon.className = 'fas fa-user-gear';
+    body.innerHTML = `
+      <div class="form-group" style="margin-bottom:16px;">
+        <label><i class="fas fa-user"></i> 選擇工作人員</label>
+        <select id="bulkStaffSelect">
+          <option value="">未指派</option>
+          ${staffList.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-footer">
+        <button class="btn btn-secondary" id="bulkCancelBtn">取消</button>
+        <button class="btn btn-primary" id="bulkConfirmBtn"><i class="fas fa-check"></i> 套用</button>
+      </div>`;
+    document.getElementById('bulkCancelBtn').addEventListener('click', closeBulkModal);
+    document.getElementById('bulkConfirmBtn').addEventListener('click', function(){
+      const val = document.getElementById('bulkStaffSelect').value;
+      let count = 0;
+      bookings.forEach(b => {
+        if(selectedIds.has(b.id)){
+          b.staff = val;
+          b.updatedAt = new Date().toISOString();
+          if(val && ['pending','confirmed'].includes(b.status)) b.status = 'assigned';
+          if(!val && b.status === 'assigned') b.status = 'confirmed';
+          count++;
+        }
+      });
+      writeEncrypted(STORAGE_KEY, bookings);
+      closeBulkModal();
+      renderAll();
+      toast('已指派 ' + count + ' 筆預約');
+    });
+  }else if(type === 'status'){
+    title.textContent = '批量更改狀態';
+    sub.textContent = '將套用至已選取的 ' + n + ' 筆預約';
+    icon.className = 'fas fa-signal';
+    body.innerHTML = `
+      <div class="form-group" style="margin-bottom:16px;">
+        <label><i class="fas fa-list-check"></i> 選擇狀態</label>
+        <div class="radio-row">
+          ${STATUSES.map((s, i) => `
+            <label>
+              <input type="radio" name="bulkStatusRadio" value="${s.key}" ${i===0?'checked':''} />
+              <span>${s.label}</span>
+            </label>`).join('')}
+        </div>
+      </div>
+      <div class="form-footer">
+        <button class="btn btn-secondary" id="bulkCancelBtn">取消</button>
+        <button class="btn btn-primary" id="bulkConfirmBtn"><i class="fas fa-check"></i> 套用</button>
+      </div>`;
+    document.getElementById('bulkCancelBtn').addEventListener('click', closeBulkModal);
+    document.getElementById('bulkConfirmBtn').addEventListener('click', function(){
+      const val = (document.querySelector('input[name="bulkStatusRadio"]:checked')||{}).value || 'pending';
+      let count = 0;
+      bookings.forEach(b => {
+        if(selectedIds.has(b.id)){
+          b.status = val;
+          b.updatedAt = new Date().toISOString();
+          count++;
+        }
+      });
+      writeEncrypted(STORAGE_KEY, bookings);
+      closeBulkModal();
+      renderAll();
+      toast('已更新 ' + count + ' 筆狀態');
+    });
+  }
+
+  document.getElementById('bulkModal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closeBulkModal(){
+  document.getElementById('bulkModal').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+/* ============================================================
+   列表事件
    ============================================================ */
 function bindTableEvents(){
   const tbody = document.getElementById('tableBody');
 
+  // 勾選
   tbody.addEventListener('change', function(e){
+    const cb = e.target.closest('input[data-action="check"]');
+    if(cb){
+      const tr = cb.closest('tr');
+      const id = tr.getAttribute('data-id');
+      if(cb.checked) selectedIds.add(id);
+      else selectedIds.delete(id);
+      tr.classList.toggle('selected', cb.checked);
+      updateBulkBar();
+      updateCheckAllState();
+      return;
+    }
+
     const sel = e.target.closest('[data-action="staff"]');
     if(!sel) return;
     const tr = sel.closest('tr');
@@ -1200,14 +2524,9 @@ function bindTableEvents(){
     if(!b) return;
     b.staff = sel.value;
     b.updatedAt = new Date().toISOString();
-    // 若已指派且當前狀態為待確認/已確認，自動推進到「已指派」
-    if(b.staff && ['pending','confirmed'].includes(b.status)){
-      b.status = 'assigned';
-    }
-    if(!b.staff && b.status === 'assigned'){
-      b.status = 'confirmed';
-    }
-    saveJSON(STORAGE_KEY, bookings);
+    if(b.staff && ['pending','confirmed'].includes(b.status)) b.status = 'assigned';
+    if(!b.staff && b.status === 'assigned') b.status = 'confirmed';
+    writeEncrypted(STORAGE_KEY, bookings);
     renderAll();
     toast(b.staff ? `已指派給 ${b.staff}` : '已取消指派');
   });
@@ -1216,7 +2535,7 @@ function bindTableEvents(){
     const btn = e.target.closest('[data-action]');
     if(!btn) return;
     const action = btn.getAttribute('data-action');
-    if(action === 'staff') return;
+    if(action === 'staff' || action === 'check') return;
 
     const tr = btn.closest('tr');
     const id = tr.getAttribute('data-id');
@@ -1235,7 +2554,7 @@ function bindTableEvents(){
 }
 
 /* ============================================================
-   新增 / 編輯 表單
+   動態服務欄位
    ============================================================ */
 const SERVICE_DYN = {
   '冷氣清洗': [
@@ -1305,19 +2624,95 @@ function buildServiceDetail(service, dyn){
     if(dyn.dAcQty)  parts.push(dyn.dAcQty + ' 部');
     return parts.join(' · ');
   }
-  if(service === '鐘點清潔'){
-    return dyn.dHours ? dyn.dHours + ' 小時' : '';
-  }
-  if(service === '家居清潔' || service === '入伙清潔'){
-    return dyn.dSize || '';
-  }
+  if(service === '鐘點清潔') return dyn.dHours ? dyn.dHours + ' 小時' : '';
+  if(service === '家居清潔' || service === '入伙清潔') return dyn.dSize || '';
   return '';
 }
 
+/* ============================================================
+   客戶姓名建議
+   ============================================================ */
+function bindNameSuggestions(){
+  const input = document.getElementById('fName');
+  const box = document.getElementById('nameSuggestions');
+
+  input.addEventListener('input', function(){
+    const q = this.value.trim().toLowerCase();
+    if(!q || q.length < 1){
+      box.classList.remove('show');
+      box.innerHTML = '';
+      return;
+    }
+    // 從現有預約中找出不重複的客戶
+    const map = new Map();
+    bookings.forEach(b => {
+      const key = (b.name||'').toLowerCase();
+      if(!key) return;
+      if(!map.has(key)){
+        map.set(key, {
+          name: b.name,
+          phone: b.phone,
+          district: b.district,
+          address: b.address,
+          count: 0
+        });
+      }
+      map.get(key).count++;
+    });
+    const matches = Array.from(map.values())
+      .filter(c => c.name.toLowerCase().includes(q))
+      .slice(0, 6);
+
+    if(!matches.length){
+      box.classList.remove('show');
+      box.innerHTML = '';
+      return;
+    }
+    box.innerHTML = matches.map(c => `
+      <div class="sug-item" data-name="${esc(c.name)}"
+           data-phone="${esc(c.phone||'')}"
+           data-district="${esc(c.district||'')}"
+           data-address="${esc(c.address||'')}">
+        <span class="sug-name">${esc(c.name)}</span>
+        <span class="sug-meta">${esc(c.phone||'')} · 曾預約 ${c.count} 次</span>
+      </div>
+    `).join('');
+    box.classList.add('show');
+  });
+
+  box.addEventListener('click', function(e){
+    const item = e.target.closest('.sug-item');
+    if(!item) return;
+    input.value = item.getAttribute('data-name');
+    const phone = item.getAttribute('data-phone');
+    const district = item.getAttribute('data-district');
+    const address = item.getAttribute('data-address');
+    if(phone && !document.getElementById('fPhone').value) document.getElementById('fPhone').value = phone;
+    if(district) document.getElementById('fDistrict').value = district;
+    if(address && !document.getElementById('fAddress').value) document.getElementById('fAddress').value = address;
+    box.classList.remove('show');
+    box.innerHTML = '';
+  });
+
+  input.addEventListener('blur', function(){
+    setTimeout(() => {
+      box.classList.remove('show');
+    }, 200);
+  });
+  input.addEventListener('focus', function(){
+    if(this.value.trim().length >= 1){
+      this.dispatchEvent(new Event('input'));
+    }
+  });
+}
+
+/* ============================================================
+   表單
+   ============================================================ */
 function openForm(id){
   editingId = id || null;
-  const form = document.getElementById('bookingForm');
-  form.reset();
+  document.getElementById('bookingForm').reset();
+  document.getElementById('nameSuggestions').classList.remove('show');
 
   renderStaffOptions();
   renderStatusRadios();
@@ -1346,13 +2741,11 @@ function openForm(id){
 
     const radio = document.querySelector(`input[name="statusRadio"][value="${b.status}"]`);
     if(radio) radio.checked = true;
-
     renderDynFields(b.service, b.dyn || {});
   }else{
     title.textContent = '新增預約';
     subtitle.textContent = '填寫客戶資料及服務詳情';
     submitText.textContent = '儲存預約';
-
     document.getElementById('fDate').value = todayStr();
     document.getElementById('fTime').value = '10:00';
     renderDynFields('', {});
@@ -1360,6 +2753,7 @@ function openForm(id){
 
   document.getElementById('formModal').classList.add('active');
   document.body.style.overflow = 'hidden';
+  setTimeout(() => document.getElementById('fName').focus(), 100);
 }
 
 function closeForm(){
@@ -1367,6 +2761,7 @@ function closeForm(){
   document.body.style.overflow = '';
   editingId = null;
   document.getElementById('bookingForm').reset();
+  document.getElementById('nameSuggestions').classList.remove('show');
   document.querySelectorAll('#bookingForm .err').forEach(el => el.classList.remove('err'));
 }
 
@@ -1385,30 +2780,17 @@ function submitForm(e){
   const notes = document.getElementById('fNotes').value.trim();
   const status = (document.querySelector('input[name="statusRadio"]:checked') || {}).value || 'pending';
 
-  // 驗證
   const required = [
-    ['fName', name],
-    ['fPhone', phone],
-    ['fDistrict', district],
-    ['fService', service],
-    ['fAddress', address],
-    ['fDate', date],
-    ['fTime', time]
+    ['fName', name], ['fPhone', phone], ['fDistrict', district],
+    ['fService', service], ['fAddress', address], ['fDate', date], ['fTime', time]
   ];
   let hasErr = false;
   required.forEach(([id, val]) => {
     const el = document.getElementById(id);
-    if(!val){
-      el.classList.add('err');
-      hasErr = true;
-    }else{
-      el.classList.remove('err');
-    }
+    if(!val){ el.classList.add('err'); hasErr = true; }
+    else el.classList.remove('err');
   });
-  if(hasErr){
-    toast('請填寫所有必填欄位', true);
-    return;
-  }
+  if(hasErr){ toast('請填寫所有必填欄位', true); return; }
   if(normalizePhone(phone).replace(/^\+?852/,'').length < 8){
     document.getElementById('fPhone').classList.add('err');
     toast('請輸入有效的 8 位電話號碼', true);
@@ -1427,18 +2809,17 @@ function submitForm(e){
       staff, price, notes, status, dyn, serviceDetail,
       updatedAt: new Date().toISOString()
     });
-    saveJSON(STORAGE_KEY, bookings);
+    writeEncrypted(STORAGE_KEY, bookings);
     toast('預約已更新');
   }else{
-    const newBooking = {
+    bookings.push({
       id: uid(),
       name, phone, district, service, address, date, time,
       staff, price, notes, status, dyn, serviceDetail,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
-    };
-    bookings.push(newBooking);
-    saveJSON(STORAGE_KEY, bookings);
+    });
+    writeEncrypted(STORAGE_KEY, bookings);
     toast('預約已新增');
   }
 
@@ -1458,8 +2839,7 @@ function openDetail(id){
   document.getElementById('detailId').textContent = b.id;
 
   const st = statusOf(b.status);
-  const grid = document.getElementById('detailGrid');
-  grid.innerHTML = `
+  document.getElementById('detailGrid').innerHTML = `
     <div class="detail-item">
       <div class="di-label"><i class="fas fa-user"></i> 客戶姓名</div>
       <div class="di-value">${esc(b.name)}</div>
@@ -1504,18 +2884,12 @@ function openDetail(id){
     </div>` : ''}
   `;
 
-  // 狀態步驟
-  const steps = document.getElementById('detailStatusSteps');
-  steps.innerHTML = STATUSES.map(s => `
+  document.getElementById('detailStatusSteps').innerHTML = STATUSES.map(s => `
     <button class="status-step ${s.key==='cancelled'?'cancel-step':''} ${b.status===s.key?'active':''}"
-            data-status="${s.key}">
-      ${s.label}
-    </button>
+            data-status="${s.key}">${s.label}</button>
   `).join('');
 
-  // 工作人員 chips
-  const chips = document.getElementById('detailStaffChips');
-  chips.innerHTML = `
+  document.getElementById('detailStaffChips').innerHTML = `
     <button class="staff-chip ${!b.staff?'active':''}" data-staff="">
       <i class="fas fa-user-slash"></i> 未指派
     </button>
@@ -1537,22 +2911,20 @@ function closeDetail(){
 }
 
 function bindDetailEvents(){
-  const steps = document.getElementById('detailStatusSteps');
-  steps.addEventListener('click', function(e){
+  document.getElementById('detailStatusSteps').addEventListener('click', function(e){
     const btn = e.target.closest('.status-step');
     if(!btn || !viewingId) return;
     const b = bookings.find(x => x.id === viewingId);
     if(!b) return;
     b.status = btn.getAttribute('data-status');
     b.updatedAt = new Date().toISOString();
-    saveJSON(STORAGE_KEY, bookings);
-    openDetail(viewingId); // 重新渲染
+    writeEncrypted(STORAGE_KEY, bookings);
+    openDetail(viewingId);
     renderAll();
     toast('狀態已更新為「' + statusOf(b.status).label + '」');
   });
 
-  const chips = document.getElementById('detailStaffChips');
-  chips.addEventListener('click', function(e){
+  document.getElementById('detailStaffChips').addEventListener('click', function(e){
     const btn = e.target.closest('.staff-chip');
     if(!btn || !viewingId) return;
     const b = bookings.find(x => x.id === viewingId);
@@ -1560,13 +2932,9 @@ function bindDetailEvents(){
     const val = btn.getAttribute('data-staff');
     b.staff = val;
     b.updatedAt = new Date().toISOString();
-    if(val && ['pending','confirmed'].includes(b.status)){
-      b.status = 'assigned';
-    }
-    if(!val && b.status === 'assigned'){
-      b.status = 'confirmed';
-    }
-    saveJSON(STORAGE_KEY, bookings);
+    if(val && ['pending','confirmed'].includes(b.status)) b.status = 'assigned';
+    if(!val && b.status === 'assigned') b.status = 'confirmed';
+    writeEncrypted(STORAGE_KEY, bookings);
     openDetail(viewingId);
     renderAll();
     toast(val ? '已指派給 ' + val : '已取消指派');
@@ -1578,7 +2946,6 @@ function bindDetailEvents(){
     closeDetail();
     openForm(id);
   });
-
   document.getElementById('detailDone').addEventListener('click', closeDetail);
 }
 
@@ -1590,13 +2957,14 @@ function deleteBooking(id){
   if(!b) return;
   if(!confirm(`確定刪除預約「${b.id} · ${b.name}」？\n此操作無法復原。`)) return;
   bookings = bookings.filter(x => x.id !== id);
-  saveJSON(STORAGE_KEY, bookings);
+  selectedIds.delete(id);
+  writeEncrypted(STORAGE_KEY, bookings);
   renderAll();
   toast('預約已刪除');
 }
 
 /* ============================================================
-   工作人員管理
+   工作人員
    ============================================================ */
 function openStaffModal(){
   renderStaffList();
@@ -1627,13 +2995,12 @@ function renderStaffList(){
       const name = this.getAttribute('data-remove');
       if(!confirm(`確定移除工作人員「${name}」？\n已指派給他的預約將顯示為未指派。`)) return;
       staffList = staffList.filter(x => x !== name);
-      saveJSON(STAFF_KEY, staffList);
-      // 更新現有預約
+      writeEncrypted(STAFF_KEY, staffList);
       let changed = false;
       bookings.forEach(b => {
         if(b.staff === name){ b.staff = ''; changed = true; }
       });
-      if(changed) saveJSON(STORAGE_KEY, bookings);
+      if(changed) writeEncrypted(STORAGE_KEY, bookings);
       renderStaffList();
       renderStaffFilter();
       renderStaffOptions();
@@ -1648,7 +3015,7 @@ function addStaff(){
   if(!name){ toast('請輸入人員名稱', true); return; }
   if(staffList.includes(name)){ toast('此人員已存在', true); return; }
   staffList.push(name);
-  saveJSON(STAFF_KEY, staffList);
+  writeEncrypted(STAFF_KEY, staffList);
   input.value = '';
   renderStaffList();
   renderStaffFilter();
@@ -1674,10 +3041,7 @@ function exportCSV(){
       b.price != null ? b.price : '', b.notes || '',
       b.createdAt ? b.createdAt.slice(0,19).replace('T',' ') : ''
     ];
-    lines.push(vals.map(v => {
-      const s = String(v == null ? '' : v);
-      return '"' + s.replace(/"/g,'""') + '"';
-    }).join(','));
+    lines.push(vals.map(v => '"' + String(v == null ? '' : v).replace(/"/g,'""') + '"').join(','));
   });
 
   const csv = '\ufeff' + lines.join('\r\n');
@@ -1702,13 +3066,93 @@ function renderAll(){
 }
 
 /* ============================================================
-   事件綁定
+   鍵盤快捷鍵
+   ============================================================ */
+function bindKeyboardShortcuts(){
+  document.addEventListener('keydown', function(e){
+    if(!unlocked) return;
+    const anyModalOpen = document.querySelector('.modal.active');
+
+    // Esc 關閉 modal
+    if(e.key === 'Escape'){
+      if(document.getElementById('formModal').classList.contains('active')) closeForm();
+      else if(document.getElementById('detailModal').classList.contains('active')) closeDetail();
+      else if(document.getElementById('staffModal').classList.contains('active')) closeStaffModal();
+      else if(document.getElementById('pwdModal').classList.contains('active')) closePwdModal();
+      else if(document.getElementById('backupModal').classList.contains('active')) closeBackupModal();
+      else if(document.getElementById('importPwdModal').classList.contains('active')) closeImportPwdModal();
+      else if(document.getElementById('bulkModal').classList.contains('active')) closeBulkModal();
+      return;
+    }
+
+    // 忽略輸入框內的快捷鍵
+    const tag = (e.target.tagName || '').toLowerCase();
+    const isInput = tag === 'input' || tag === 'textarea' || tag === 'select' || e.target.isContentEditable;
+    if(isInput) return;
+    if(anyModalOpen) return;
+
+    if(e.key === 'n' || e.key === 'N'){
+      e.preventDefault();
+      openForm(null);
+    }
+    if(e.key === '/'){
+      e.preventDefault();
+      document.getElementById('searchInput').focus();
+    }
+  });
+}
+
+/* ============================================================
+   活動監聽（自動鎖定）
+   ============================================================ */
+function bindActivityListeners(){
+  ['mousedown','keydown','scroll','touchstart','click'].forEach(evt => {
+    document.addEventListener(evt, recordActivity, { passive: true });
+  });
+}
+
+/* ============================================================
+   主事件綁定
    ============================================================ */
 function bindEvents(){
+  // 鎖屏
+  document.getElementById('lockForm').addEventListener('submit', handleLockSubmit);
+
+  document.getElementById('togglePwd').addEventListener('click', function(){
+    const inp = document.getElementById('lockPassword');
+    const icon = this.querySelector('i');
+    if(inp.type === 'password'){ inp.type = 'text'; icon.className = 'fas fa-eye-slash'; }
+    else{ inp.type = 'password'; icon.className = 'fas fa-eye'; }
+  });
+
+  document.getElementById('lockPassword').addEventListener('input', function(){
+    if(lockMode !== 'setup') return;
+    const s = pwdStrength(this.value);
+    const el = document.getElementById('pwdStrength');
+    el.className = 'lock-pwd-strength' +
+      (s === 0 ? '' : s === 1 ? ' weak' : s === 2 ? ' fair' : s === 3 ? ' good' : ' strong');
+  });
+
+  document.getElementById('switchMode').addEventListener('click', function(){
+    if(lockMode === 'unlock'){
+      const hasAny = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(STAFF_KEY);
+      if(hasAny && !confirm('系統偵測到已有加密資料。\n設定新密碼不會讀取舊資料，確定要設定全新密碼嗎？')) return;
+      showLockScreen('setup');
+    }else{
+      showLockScreen('unlock');
+    }
+  });
+
   // Header
   document.getElementById('btnAdd').addEventListener('click', () => openForm(null));
   document.getElementById('btnExport').addEventListener('click', exportCSV);
   document.getElementById('btnStaff').addEventListener('click', openStaffModal);
+  document.getElementById('btnPwd').addEventListener('click', openPwdModal);
+  document.getElementById('btnBackup').addEventListener('click', openBackupModal);
+  document.getElementById('btnTheme').addEventListener('click', toggleTheme);
+  document.getElementById('btnLock').addEventListener('click', function(){
+    if(confirm('確定要鎖定系統嗎？\n下次進入需重新輸入密碼。')) lockApp(false);
+  });
 
   // 表單
   document.getElementById('bookingForm').addEventListener('submit', submitForm);
@@ -1717,8 +3161,6 @@ function bindEvents(){
   document.getElementById('formModal').addEventListener('click', function(e){
     if(e.target === this) closeForm();
   });
-
-  // 服務變更 → 動態欄位
   document.getElementById('fService').addEventListener('change', function(){
     renderDynFields(this.value, {});
   });
@@ -1730,7 +3172,7 @@ function bindEvents(){
   });
   bindDetailEvents();
 
-  // 工作人員管理
+  // 工作人員
   document.getElementById('staffClose').addEventListener('click', closeStaffModal);
   document.getElementById('staffModal').addEventListener('click', function(e){
     if(e.target === this) closeStaffModal();
@@ -1738,6 +3180,39 @@ function bindEvents(){
   document.getElementById('staffAddBtn').addEventListener('click', addStaff);
   document.getElementById('staffInput').addEventListener('keydown', function(e){
     if(e.key === 'Enter'){ e.preventDefault(); addStaff(); }
+  });
+
+  // 密碼
+  document.getElementById('pwdClose').addEventListener('click', closePwdModal);
+  document.getElementById('pwdCancel').addEventListener('click', closePwdModal);
+  document.getElementById('pwdModal').addEventListener('click', function(e){
+    if(e.target === this) closePwdModal();
+  });
+  document.getElementById('pwdForm').addEventListener('submit', handlePwdChange);
+
+  // 備份
+  document.getElementById('backupClose').addEventListener('click', closeBackupModal);
+  document.getElementById('backupModal').addEventListener('click', function(e){
+    if(e.target === this) closeBackupModal();
+  });
+  document.getElementById('backupExportCard').addEventListener('click', exportBackup);
+  document.getElementById('backupImportCard').addEventListener('click', triggerImport);
+
+  // 匯入密碼
+  document.getElementById('importPwdClose').addEventListener('click', closeImportPwdModal);
+  document.getElementById('importPwdCancel').addEventListener('click', closeImportPwdModal);
+  document.getElementById('importPwdConfirm').addEventListener('click', confirmImport);
+  document.getElementById('importPwd').addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){ e.preventDefault(); confirmImport(); }
+  });
+  document.getElementById('importPwdModal').addEventListener('click', function(e){
+    if(e.target === this) closeImportPwdModal();
+  });
+
+  // 批量
+  document.getElementById('bulkModalClose').addEventListener('click', closeBulkModal);
+  document.getElementById('bulkModal').addEventListener('click', function(e){
+    if(e.target === this) closeBulkModal();
   });
 
   // 篩選
@@ -1753,35 +3228,66 @@ function bindEvents(){
     document.getElementById('filterService').value = '';
     document.getElementById('filterStaff').value = '';
     document.getElementById('filterDate').value = '';
+    sortField = 'date';
+    sortDir = 'asc';
     renderTable();
-    toast('已重設篩選');
+    toast('已重設篩選與排序');
   });
 
-  // ESC 關閉
-  document.addEventListener('keydown', function(e){
-    if(e.key !== 'Escape') return;
-    if(document.getElementById('formModal').classList.contains('active')) closeForm();
-    else if(document.getElementById('detailModal').classList.contains('active')) closeDetail();
-    else if(document.getElementById('staffModal').classList.contains('active')) closeStaffModal();
-  });
-
-  // 表格事件
+  // 表格排序
+  bindSorting();
   bindTableEvents();
+  bindBulkEvents();
+  bindNameSuggestions();
+  bindKeyboardShortcuts();
+  bindActivityListeners();
 }
 
 /* ============================================================
    啟動
    ============================================================ */
 function boot(){
-  initData();
-  renderFilterOptions();
-  renderStaffOptions();
-  renderStatusRadios();
-  renderAll();
+  initTheme();
+
+  if(!cryptoSupported){
+    document.getElementById('lockSubtitle').innerHTML =
+      '<span style="color:#c0392b;font-weight:600;">此瀏覽器不支援 Web Crypto API，請使用最新版 Chrome / Edge / Safari / Firefox，或透過 HTTPS 開啟。</span>';
+    document.getElementById('lockBtn').disabled = true;
+    bindActivityListeners();
+    return;
+  }
+
   bindEvents();
 
-  console.log('%c❄️ 立夏家政 · 預約管理系統已啟動','color:#00C9A7;font-weight:bold;font-size:14px;');
-  console.log('📋 目前預約數：' + bookings.length + '｜工作人員：' + staffList.join('、'));
+  const rawBookings = localStorage.getItem(STORAGE_KEY);
+  const rawStaff = localStorage.getItem(STAFF_KEY);
+  const hasData = !!(rawBookings || rawStaff);
+
+  // 更新嘗試提示
+  updateAttemptsHint();
+
+  if(hasData){
+    showLockScreen('unlock');
+  }else{
+    showLockScreen('setup');
+  }
+
+  // 每 10 秒更新一次鎖定倒數
+  setInterval(() => {
+    if(!unlocked){
+      updateAttemptsHint();
+      const remain = getLockRemaining();
+      if(remain === 0 && lockMode === 'unlock'){
+        const d = getLoginAttempts();
+        if(d.count > 0 && d.count < MAX_ATTEMPTS){
+          // 若之前因鎖定，鎖定結束後允許再次輸入
+        }
+      }
+    }
+  }, 10000);
+
+  console.log('%c❄️ 立夏家政 · 預約管理系統（加密優化版）已啟動','color:#00C9A7;font-weight:bold;font-size:14px;');
+  console.log('🔐 AES-256-GCM · PBKDF2 · 登入限制 · 自動鎖定 · 加密備份 · 排序 · 批量操作');
 }
 
 document.addEventListener('DOMContentLoaded', boot);
